@@ -29,7 +29,7 @@ def repair_reject_file(input_path, bank_name, output_path=None):
     expected_columns = ["Transaction_Date", "Description", "Debit_Amount", "Credit_Amount", "Balance"]
     if not all(col in df.columns for col in expected_columns):
         print("❌ Missing expected multiline reject format. Reject file is not repairable.")
-        print(f"➡️ Found columns: {list(df.columns)}")
+        print(f"Found columns: {list(df.columns)}")
         return None
 
     try:

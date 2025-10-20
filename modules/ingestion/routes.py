@@ -122,7 +122,7 @@ def upload():
                 df["Source_File"] = raw_name
                 merged_df = pd.concat([merged_df, df], ignore_index=True)
             except Exception as e:
-                print(f"❌ Failed to read CSV: {raw_name} — {e}")
+                print(f"ERROR: Failed to read CSV: {raw_name} - {e}")
 
     merged_name = None
     if not merged_df.empty:
@@ -173,21 +173,21 @@ def repair():
         upload_path = os.path.join("storage", "uploads", filename)
         os.makedirs(os.path.dirname(upload_path), exist_ok=True)
         file.save(upload_path)
-        print(f"📥 Uploaded reject file: {upload_path}")
+        print(f"Uploaded reject file: {upload_path}")
 
         try:
             repaired_df = repair_reject_file(upload_path, bank)
         except Exception as e:
-            print(f"❌ Error during repair: {e}")
+            print(f"ERROR: Error during repair: {e}")
             flash("Repair failed with an exception.")
             return redirect(request.url)
 
         if repaired_df is not None and not repaired_df.empty:
             output_path = upload_path.replace("__REJECTS_", "__RECOVERED_")
-            print(f"✅ Sending repaired file: {output_path}")
+            print(f"Sending repaired file: {output_path}")
             return send_file(output_path, as_attachment=True)
         else:
-            print("⚠️ Repair returned empty or None.")
+            print("WARNING: Repair returned empty or None.")
             flash("Repair failed or file was empty or incorrect format.")
             return redirect(request.url)
 
