@@ -26,6 +26,7 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         background: #fff;
+        margin-bottom: 24px;
       }
       label {
         font-weight: 600;
@@ -104,8 +105,8 @@
     <div class="wrap">
       <h2>ExpenseIQ · Step 1 & 2: Ingest & Standardize</h2>
 
+      <!-- 🔹 Standard Upload Form -->
       <div class="card">
-        <!-- Unified Upload Form (PDF + CSV) -->
         <form action="/ingestion/upload" method="post" enctype="multipart/form-data">
           <div class="row">
             <div>
@@ -126,7 +127,6 @@
             <div>
               <label>Select PDF and/or CSV files</label>
               <input type="file" name="pdfs" multiple accept="application/pdf"/>
-              <!-- <input type="file" name="csv_files" multiple accept=".csv" class="mt-2"/> -->
               <p class="hint">You can select multiple PDFs and CSVs together for combined processing.</p>
             </div>
           </div>
@@ -147,14 +147,32 @@
               <li>Dates normalized to <code>YYYY-MM-DD</code>; Debit/Credit are numeric only.</li>
               <li>REJECTS file logs any ambiguous or error-prone rows with reasons.</li>
             </ul>
-            <p class="footer-note">Supported now: HDFC, Kotak, SBI, CUB, ICICI, AXIS, and others via a generic parser.</p>
+            <p class="footer-note">Supported: HDFC, Kotak, SBI, CUB, ICICI, AXIS, and generic others.</p>
           </div>
 
           <button class="btn" type="submit">Upload & Process Files</button>
         </form>
 
-        <!-- Repair Link -->
         <a class="repair-link" href="/repair">🔧 Go to Repair Rejected Files</a>
+      </div>
+
+      <!-- 🔹 CSV Preprocessing Form -->
+      <div class="card">
+        <h3>Step 3: Preprocess CSV (Clean narration-only rows)</h3>
+        <form action="/preprocess_csv" method="post" enctype="multipart/form-data">
+          <label>Select a CSV file to preprocess:</label>
+          <input type="file" name="csv_file" accept=".csv" required>
+          <p class="hint">Detects and merges incomplete narration rows. Output will be saved as <code>__REPAIRED.csv</code>.</p>
+          <button class="btn" type="submit">🧹 Preprocess & Download Repaired CSV</button>
+        </form>
+
+        <div class="tips">
+          <strong>How it works:</strong>
+          <ul class="list">
+            <li>Merges narration-only rows with previous transactions.</li>
+            <li>No need to manually clean missing Debit/Credit/Balance.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </body>

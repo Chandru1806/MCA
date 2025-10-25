@@ -1,6 +1,8 @@
 import os
-from flask import Flask
+import tempfile
+from flask import Flask, request, send_file
 from modules.ingestion import ingestion_bp
+from modules.preprocessing import preprocess_csv  # Import your preprocess_csv.py module
 
 def create_app():
     app = Flask(__name__)
@@ -22,12 +24,20 @@ def create_app():
     def home():
         return '<meta http-equiv="refresh" content="0; url=/ingestion" />'
 
+    # ✅ Your /preprocess_csv route goes inside here
+    @app.route("/preprocess_csv", methods=["POST"])
+    def preprocess_csv_route():
+        file = request.files["csv_file"]
+        if not file:
+            return "No CSV uploaded", 400
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+            file.save(tmp.name)
+            repaired_path = preprocess_csv.run(tmp.name)
+            return send_file(repaired_path, as_attachment=True)
+
     return app
 
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True)
-
-
-
-    ##Test commit
