@@ -9,7 +9,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 from . import ingestion_bp
 from .detect import detect_bank
-from .extract import parse_kotak_df, parse_hdfc_df, parse_generic_df
+from .extract import parse_kotak_df, parse_hdfc_df, parse_sbi_df, parse_icici_df
 from .standardize import standardize_and_write
 from modules.repair.repair_rejects import repair_reject_file
 
@@ -27,20 +27,22 @@ STD_COLS = [
 def _is_pdf_filename(name: str) -> bool:
     return (name or "").lower().endswith(".pdf")
 
-# ----------------------------
-# Ingestion Routes
-# ----------------------------
+
+# ==========================================================
+# 🧾 Ingestion Routes
+# ==========================================================
 
 @ingestion_bp.get("/ingestion")
 def index():
     return render_template("ingestion/upload.html")
 
+
 @ingestion_bp.post("/ingestion/upload")
 def upload():
     """
     Unified upload for PDFs and/or CSVs.
-    - PDFs: parse & standardize
-    - CSVs: merge into one file
+    - PDFs → parse + detect + standardize
+    - CSVs → merge into one combined dataset
     """
     upload_dir = current_app.config.get("UPLOAD_FOLDER", "storage/uploads")
     output_dir = current_app.config.get("OUTPUT_FOLDER", "storage/outputs")
@@ -49,11 +51,10 @@ def upload():
 
     bank_hint = (request.form.get("bank") or "").strip() or None
 
-    # Collect both PDFs and CSVs
     pdf_files = request.files.getlist("pdfs")
     csv_files = request.files.getlist("csv_files")
 
-    # Nothing selected?
+    # No input files
     if (not pdf_files or all((f.filename or "").strip() == "" for f in pdf_files)) \
        and (not csv_files or all((f.filename or "").strip() == "" for f in csv_files)):
         return "No files selected.", 400
@@ -62,7 +63,9 @@ def upload():
     std_csvs, rej_csvs = [], []
     merged_df = pd.DataFrame()
 
-    # --- Process PDFs ---
+    # =====================================================
+    # Process PDF Statements
+    # =====================================================
     for f in pdf_files:
         raw_name = (f.filename or "").strip()
         if not raw_name or not _is_pdf_filename(raw_name):
@@ -72,27 +75,38 @@ def upload():
         in_path = os.path.join(upload_dir, f"{batch_id}_{safe}")
         f.save(in_path)
 
+        # --- Detect Bank ---
         bank = bank_hint or detect_bank(in_path)
         base = os.path.splitext(os.path.basename(in_path))[0]
+        print(f"📄 Processing {raw_name} → Detected Bank: {bank}")
 
         try:
+            # --- Parse Based on Bank ---
             if bank == "KOTAK":
                 df_raw = parse_kotak_df(in_path)
             elif bank == "HDFC":
                 df_raw = parse_hdfc_df(in_path)
+            elif bank == "ICICI":
+                df_raw = parse_icici_df(in_path)
+            elif bank == "SBI":
+                df_raw = parse_sbi_df(in_path)
             else:
-                df_raw = parse_generic_df(in_path)
+                print(f"[WARN] Unknown bank for {raw_name}. Falling back to HDFC-like parser.")
+                df_raw = parse_hdfc_df(in_path)
 
+            # --- Validate & Standardize ---
             std_csv, rej_csv = standardize_and_write(df_raw, bank, base, output_dir)
             std_csvs.append(os.path.basename(std_csv))
             rej_csvs.append(os.path.basename(rej_csv))
 
         except Exception as e:
+            # --- Error Handling ---
             err_bank = (bank or "UNKNOWN").upper()
             std_path = os.path.join(output_dir, f"{base}__STD_{err_bank}.csv")
             rej_path = os.path.join(output_dir, f"{base}__REJECTS_{err_bank}.csv")
 
             pd.DataFrame(columns=STD_COLS).to_csv(std_path, index=False, encoding="utf-8-sig")
+
             tb = traceback.format_exc(limit=2)
             rej_df = pd.DataFrame([{
                 "Bank_Name": err_bank,
@@ -109,8 +123,11 @@ def upload():
 
             std_csvs.append(os.path.basename(std_path))
             rej_csvs.append(os.path.basename(rej_path))
+            print(f"❌ Parser error for {raw_name}: {e}")
 
-    # --- Process CSVs ---
+    # =====================================================
+    # Process Uploaded CSV Files
+    # =====================================================
     for f in csv_files:
         raw_name = (f.filename or "").strip()
         if raw_name.lower().endswith(".csv"):
@@ -122,7 +139,7 @@ def upload():
                 df["Source_File"] = raw_name
                 merged_df = pd.concat([merged_df, df], ignore_index=True)
             except Exception as e:
-                print(f"ERROR: Failed to read CSV: {raw_name} - {e}")
+                print(f"❌ Failed to read CSV: {raw_name} — {e}")
 
     merged_name = None
     if not merged_df.empty:
@@ -141,6 +158,11 @@ def upload():
         rejects=",".join(rej_csvs)
     ))
 
+
+# =====================================================
+# Preview and Download Routes
+# =====================================================
+
 @ingestion_bp.get("/ingestion/preview")
 def preview():
     primary = request.args.get("primary")
@@ -148,18 +170,20 @@ def preview():
     rejects = [x for x in (request.args.get("rejects") or "").split(",") if x]
     return render_template("ingestion/preview.html", primary=primary, others=others, rejects=rejects)
 
+
 @ingestion_bp.get("/ingestion/download/<path:fname>")
 def download(fname):
     output_dir = current_app.config.get("OUTPUT_FOLDER", "storage/outputs")
     return send_from_directory(output_dir, fname, as_attachment=True)
 
-# ----------------------------
-# Repair Rejects Route
-# ----------------------------
+
+# =====================================================
+# 🧩 Reject File Repair
+# =====================================================
 
 @ingestion_bp.route("/repair", methods=["GET", "POST"])
 def repair():
-    supported_banks = ["HDFC", "KOTAK", "CUB", "ICICI", "SBI", "AXIS", "IDFC"]
+    supported_banks = ["HDFC", "KOTAK", "SBI", "ICICI", "CUB", "AXIS", "IDFC"]
 
     if request.method == "POST":
         file = request.files.get("reject_file")
@@ -173,21 +197,21 @@ def repair():
         upload_path = os.path.join("storage", "uploads", filename)
         os.makedirs(os.path.dirname(upload_path), exist_ok=True)
         file.save(upload_path)
-        print(f"Uploaded reject file: {upload_path}")
+        print(f"📥 Uploaded reject file: {upload_path}")
 
         try:
             repaired_df = repair_reject_file(upload_path, bank)
         except Exception as e:
-            print(f"ERROR: Error during repair: {e}")
+            print(f"❌ Error during repair: {e}")
             flash("Repair failed with an exception.")
             return redirect(request.url)
 
         if repaired_df is not None and not repaired_df.empty:
             output_path = upload_path.replace("__REJECTS_", "__RECOVERED_")
-            print(f"Sending repaired file: {output_path}")
+            print(f"✅ Sending repaired file: {output_path}")
             return send_file(output_path, as_attachment=True)
         else:
-            print("WARNING: Repair returned empty or None.")
+            print("⚠️ Repair returned empty or None.")
             flash("Repair failed or file was empty or incorrect format.")
             return redirect(request.url)
 

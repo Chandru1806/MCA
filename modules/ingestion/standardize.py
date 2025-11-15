@@ -2,8 +2,9 @@ import os
 import re
 import uuid
 import pandas as pd
-from .validator import split_std_rejects_kotak, split_std_rejects_hdfc_like
+from .validator import split_std_rejects_kotak, split_std_rejects_hdfc_like, split_std_rejects_sbi, split_std_rejects_icici
 
+# ---------------- Common Schema ----------------
 COMMON_COLS = [
     "Transaction_ID",
     "Transaction_Date",
@@ -22,7 +23,7 @@ _VALUE_DT_TAIL = re.compile(
 _TRAILING_NUM = re.compile(rf"\s+{NUM}\s*$", re.I)
 _TRAILING_DATE_ONLY = re.compile(r"\s+\d{2}[-/]\d{2}[-/]\d{2,4}\s*$")
 _SYS_TAIL = re.compile(
-    r"(?:"
+    r"(?:"  # remove trailing system info fragments
     r"\s+for\s+pin"
     r"|"
     r"\s+[A-Z]{3,}\d{6,}(?:/\d{2}[:.]\d{2})?"
@@ -40,31 +41,29 @@ _DATE_AMT_BAL_INLINE = re.compile(
 )
 _WS2 = re.compile(r"\s{2,}")
 
+
+# =====================================================
+# Clean Description
+# =====================================================
 def _clean_desc(text: str) -> str:
     if not isinstance(text, str):
         return text
     s = text
-
-    # Remove HDFC footer address block
     s = _HDFC_ADDR.sub("", s)
-
-    # NEW: Truncate description before known footer markers
-    # e.g., anything after HDFCBANK, HDFC Bank, etc.
     s = re.split(r"(HDFC\s*BANK.*|HDFCBANKLIMITED.*)", s, flags=re.I)[0]
-
-    # Remove inline date+amount+balance noise
     s = _DATE_AMT_BAL_INLINE.sub("", s)
     s = _VALUE_DT_TAIL.sub("", s)
     s = _TRAILING_DATE_ONLY.sub("", s)
     s = _SYS_TAIL.sub("", s)
     s = _TRAILING_NUM.sub("", s)
-
-    # Strip unnecessary punctuation/spaces
     s = s.strip(" -:·•|")
     s = _WS2.sub(" ", s).strip()
     return s
 
 
+# =====================================================
+# Numeric Format Helpers
+# =====================================================
 def _fmt2(x) -> str:
     try:
         if x is None or str(x).strip() == "":
@@ -73,6 +72,10 @@ def _fmt2(x) -> str:
     except Exception:
         return ""
 
+
+# =====================================================
+# Enforce Schema + Data Types
+# =====================================================
 def _enforce_schema_and_types(std_df: pd.DataFrame, bank_upper: str) -> pd.DataFrame:
     if std_df is None or std_df.empty:
         return pd.DataFrame(columns=COMMON_COLS)
@@ -94,6 +97,10 @@ def _enforce_schema_and_types(std_df: pd.DataFrame, bank_upper: str) -> pd.DataF
             df[c] = ""
     return df[COMMON_COLS]
 
+
+# =====================================================
+# Log Summary
+# =====================================================
 def _log_quality(file_base: str, bank: str, std_df: pd.DataFrame, rej_df: pd.DataFrame):
     n_std = 0 if std_df is None else len(std_df)
     n_rej = 0 if rej_df is None else len(rej_df)
@@ -101,22 +108,39 @@ def _log_quality(file_base: str, bank: str, std_df: pd.DataFrame, rej_df: pd.Dat
     rej_rate = (n_rej / total * 100.0) if total else 0.0
     print(f"[INGEST] {file_base} [{bank}] → STD: {n_std}, REJECTS: {n_rej}, Total: {total}, Reject rate: {rej_rate:.1f}%")
 
+
+# =====================================================
+# Main Standardization Entry Point
+# =====================================================
 def standardize_and_write(df_raw: pd.DataFrame, bank_name: str, base_name: str, out_dir: str):
+    """
+    Applies the appropriate validator for the bank, standardizes column types,
+    and writes STD and REJECT CSVs to the output directory.
+    """
     os.makedirs(out_dir, exist_ok=True)
     bank = (bank_name or "UNKNOWN").upper()
 
+    # --- Select appropriate validator ---
     if bank == "KOTAK":
         std_df, rej_df = split_std_rejects_kotak(df_raw, bank)
+    elif bank == "SBI":
+        std_df, rej_df = split_std_rejects_sbi(df_raw, bank)
+    elif bank == "ICICI":
+        std_df, rej_df = split_std_rejects_icici(df_raw, bank)
     else:
         std_df, rej_df = split_std_rejects_hdfc_like(df_raw, bank)
 
+    # --- Enforce schema ---
     std_df = _enforce_schema_and_types(std_df, bank)
 
+    # --- Output file paths ---
     std_csv = os.path.join(out_dir, f"{base_name}__STD_{bank}.csv")
     rej_csv = os.path.join(out_dir, f"{base_name}__REJECTS_{bank}.csv")
 
+    # --- Write CSVs ---
     std_df.to_csv(std_csv, index=False, encoding="utf-8-sig")
     (rej_df if rej_df is not None else pd.DataFrame()).to_csv(rej_csv, index=False, encoding="utf-8-sig")
 
+    # --- Log summary ---
     _log_quality(base_name, bank, std_df, rej_df)
     return std_csv, rej_csv
