@@ -71,110 +71,81 @@ def clean_description(desc: str) -> str:
             return desc.split(p)[0].strip()
     return desc.strip()
 
-# ===================== HDFC Parser ========================
-HDFC_HEADER_RE = re.compile(
-    r"^Date\s+Narration\s+Chq\./Ref\.No\.\s+ValueDt\s+WithdrawalAmt\.\s+DepositAmt\.\s+ClosingBalance\s*$",
-    re.I,
-)
+# ===================== FINAL HDFC TABLE-BASED PARSER (GENERALIZED SCHEMA) ========================
 
-DEBIT_HINTS  = ["NWD", "ATM", "POS", "CARD", "DEBIT", "FASTAG", "BILL", "RECHARGE", "ZOMATO", "SWIGGY", "AMAZON", "FLIPKART", "IRCTC", "PCD", "CHRG"]
-CREDIT_HINTS = ["NEFT", "IMPS", "CREDIT", "SALARY", "REV", "REFUND", "INTEREST", "REWARD", "REVERSAL", "UPI-REV", "REV-UPI"]
+import pdfplumber
+import pandas as pd
+import uuid
 
-INLINE_VALUEDT_BLOCK = re.compile(
-    r"(?:\bValueDt\b\s*)?\b\d{2}/\d{2}/\d{2,4}\b(?:\s+" + NUM + r"){1,2}",
-    re.I,
-)
+def normalize_amount(v):
+    """Convert string amounts like '1,234.56' → float"""
+    if not v or str(v).strip() == "":
+        return None
+    v = str(v).replace(",", "").replace("₹", "").strip()
+    try:
+        return float(v)
+    except:
+        return None
 
-def _looks_like_debit(narr: str) -> bool:
-    u = (narr or "").upper()
-    return any(k in u for k in DEBIT_HINTS)
-
-def _looks_like_credit(narr: str) -> bool:
-    u = (narr or "").upper()
-    return any(k in u for k in CREDIT_HINTS)
-
-def _clean_hdfc_narr(narr: str) -> str:
-    s = narr
-    s = INLINE_VALUEDT_BLOCK.sub("", s)
-    s = re.sub(r"\s{2,}", " ", s).strip(" -:·•|*")
-    return s.strip()
 
 def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
-    L_all = _lines(pdf_path)
-    start = 0
-    for i, ln in enumerate(L_all):
-        if HDFC_HEADER_RE.search(ln):
-            start = i + 1
-            break
-    L = [ln for ln in L_all[start:] if not _is_noise(ln)]
-    recs, cur = [], None
+    rows = []
 
-    def finalize(date: str, narr_parts: list[str]):
-        s = (date + " " + " ".join(narr_parts)).strip()
-        parts = s.split()
-        if not parts:
-            return None
-        date = parts[0]
-        tail = parts[1:]
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            table = page.extract_table()
 
-        nums = []
-        for tok in reversed(tail):
-            if NUM_RE.match(tok):
-                nums.append(tok)
-                if len(nums) == 3:
-                    break
-            elif nums:
-                break
-        nums = list(reversed(nums))
+            # If no table present, skip
+            if not table:
+                continue
 
-        narr = " ".join(tail)
-        for tok in reversed(nums):
-            if narr.endswith(tok):
-                narr = narr[: -len(tok)].rstrip()
+            # Validate table has at least 7 columns
+            header = table[0]
+            if len(header) < 7:
+                continue
 
-        narr = clean_description(_clean_hdfc_narr(narr))
+            # Process each row (skip header)
+            for row in table[1:]:
+                if not row or len(row) < 7:
+                    continue
 
-        debit = credit = balance = ""
-        if len(nums) == 3:
-            debit, credit, balance = nums
-        elif len(nums) == 2:
-            balance = nums[-1]
-            amt = nums[0]
-            if _looks_like_credit(narr) and not _looks_like_debit(narr):
-                credit = amt
-            elif _looks_like_debit(narr) and not _looks_like_credit(narr):
-                debit = amt
-            else:
-                debit = amt
-        elif len(nums) == 1:
-            balance = nums[0]
+                date        = row[0].strip() if row[0] else None
+                narr        = row[1].strip() if row[1] else None
+                
+                debit_raw   = row[4]
+                credit_raw  = row[5]
+                balance_raw = row[6]
 
-        chq_ref = ""
-        mref = re.search(r"(?:UPI-\w+|[A-Za-z]{2,}\d{6,}|[A-Z]{2,}\d{4,}|[0-9]{6,})$", narr)
-        if mref:
-            chq_ref = mref.group(0).strip()
-            narr = narr[: narr.rfind(chq_ref)].rstrip()
+                debit   = normalize_amount(debit_raw)
+                credit  = normalize_amount(credit_raw)
+                balance = normalize_amount(balance_raw)
 
-        return [date, narr, chq_ref, debit, credit, balance]
+                rows.append([
+                    str(uuid.uuid4()),   # Transaction_ID
+                    date,                # Transaction_Date
+                    narr,                # Description
+                    debit,               # Debit_Amount
+                    credit,              # Credit_Amount
+                    balance,             # Balance
+                    "HDFC"               # Bank_Name
+                ])
 
-    for raw in L:
-        if DATE_RE.match(raw):
-            if cur:
-                row = finalize(cur["date"], cur["narr"])
-                if row:
-                    recs.append(row)
-            parts = raw.split(maxsplit=1)
-            cur = {"date": parts[0], "narr": [parts[1]] if len(parts) > 1 else []}
-        else:
-            if cur:
-                cur["narr"].append(raw)
+    df = pd.DataFrame(rows, columns=[
+        "Transaction_ID",
+        "Transaction_Date",
+        "Description",
+        "Debit_Amount",
+        "Credit_Amount",
+        "Balance",
+        "Bank_Name"
+    ])
 
-    if cur:
-        row = finalize(cur["date"], cur["narr"])
-        if row:
-            recs.append(row)
+    # Drop completely empty rows
+    df = df.dropna(how="all").reset_index(drop=True)
 
-    return pd.DataFrame(recs, columns=["Date", "Narration", "Chq/Ref No", "Debit", "Credit", "Balance"])
+    return df
+
+
 
 # KOTAK + GENERIC parsers remain unchanged unless you want footer removal there as well.
 
