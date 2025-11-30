@@ -203,7 +203,7 @@ def split_std_rejects_hdfc_like(df_raw: pd.DataFrame, bank_name: str = "HDFC"):
 #  SBI (State Bank of India)
 # =======================================================
 # ================================================================
-# 🏦 SBI Splitter (follows HDFC-like pattern)
+# SBI Splitter (follows HDFC-like pattern)
 # ================================================================
 def split_std_rejects_sbi(df_raw: pd.DataFrame, bank_name: str = "SBI"):
     std_rows, rej_rows = [], []
@@ -283,7 +283,7 @@ def _parse_date_iso(date_str):
         return ""
 
 # ============================================================
-# 🏦 ICICI BANK VALIDATOR
+# ICICI BANK VALIDATOR
 # ============================================================
 
 def split_std_rejects_icici(df_raw: pd.DataFrame, bank_name: str = "ICICI"):

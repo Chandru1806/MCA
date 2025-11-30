@@ -29,7 +29,7 @@ def _is_pdf_filename(name: str) -> bool:
 
 
 # ==========================================================
-# 🧾 Ingestion Routes
+# Ingestion Routes
 # ==========================================================
 
 @ingestion_bp.get("/ingestion")

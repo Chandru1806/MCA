@@ -16,7 +16,7 @@ BANK_PATTERNS = {
     "SBI": [
         r"\bSTATE\s*BANK\s*OF\s*INDIA\b",
         r"\bSBI\b",
-        # ✅ Generalized — works with or without dates
+        # Generalized - works with or without dates
         r"Account\s*Statement.*State\s*Bank\s*of\s*India",
         r"Account\s*Statement.*SBI",
     ],

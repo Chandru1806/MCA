@@ -411,5 +411,5 @@ def parse_icici_df(pdf_path: str) -> pd.DataFrame:
     df_std = df_std[df_std["Date"].notna() & df_std["Narration"].notna()]
     df_std = df_std[df_std["Date"].str.contains(r"\d{2}/\d{2}/\d{4}")]
 
-    print(f"[ICICI] ✅ Extracted {len(df_std)} valid transactions.")
+    print(f"[ICICI] Extracted {len(df_std)} valid transactions.")
     return df_std

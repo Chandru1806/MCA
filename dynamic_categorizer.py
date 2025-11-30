@@ -275,6 +275,6 @@ if __name__ == "__main__":
     # Save model for future use
     categorizer.save_model("transaction_categorizer_model.pkl")
     
-    print(f"✅ Categorized {len(categorized_df)} transactions")
-    print(f"📊 Category distribution:")
+    print(f"Categorized {len(categorized_df)} transactions")
+    print(f"Category distribution:")
     print(categorized_df['Category'].value_counts())

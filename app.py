@@ -24,7 +24,7 @@ def create_app():
     def home():
         return '<meta http-equiv="refresh" content="0; url=/ingestion" />'
 
-    # ✅ Your /preprocess_csv route goes inside here
+    # Your /preprocess_csv route goes inside here
     @app.route("/preprocess_csv", methods=["POST"])
     def preprocess_csv_route():
         file = request.files["csv_file"]

@@ -67,7 +67,7 @@ def run(input_csv):
     base, ext = os.path.splitext(input_csv)
     output_csv = base + "__REPAIRED" + ext
     repaired_df.to_csv(output_csv, index=False)
-    print(f"[✅] Repaired CSV saved to: {output_csv}")
+    print(f"[OK] Repaired CSV saved to: {output_csv}")
     return output_csv
 
 
