@@ -1,2 +1,0 @@
-﻿Bank_Name,Raw_Date,Raw_Narration,Raw_Debit,Raw_Credit,Raw_Balance,Reason,Suggest_Date,Suggest_Debit,Suggest_Credit,Suggest_Balance
-HDFC,01/10/25,"INTERESTPAIDTILL30-SEP-2025 000000000000000 STATEMENTSUMMARY :- OpeningBalance DrCount CrCount Debits Credits ClosingBal 43,300.32 50 6 52,184.43 51,935.36 43,051.25 GeneratedOn: 19-Oct-202519:59 GeneratedBy:184734698 RequestingBranchCode:NET Thisisacomputergeneratedstatementanddoes notrequiresignature.","52,184.43","51,935.36","43,051.25",both_amounts_present,2025-10-01,52184.43,51935.36,43051.25

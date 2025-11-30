@@ -16,11 +16,11 @@ def repair_reject_file(input_path, bank_name, output_path=None):
     try:
         df = pd.read_csv(input_path)
     except Exception as e:
-        print(f"❌ Error reading file: {e}")
+        print(f"  Error reading file: {e}")
         return None
 
     if df.empty or df.shape[0] == 0:
-        print(f"❌ {os.path.basename(input_path)} is empty.")
+        print(f"  {os.path.basename(input_path)} is empty.")
         return None
 
     print(f"🔍 Attempting repair for: {os.path.basename(input_path)} | Bank: {bank_name}")
@@ -28,7 +28,7 @@ def repair_reject_file(input_path, bank_name, output_path=None):
     # Expected multi-line format reject columns
     expected_columns = ["Transaction_Date", "Description", "Debit_Amount", "Credit_Amount", "Balance"]
     if not all(col in df.columns for col in expected_columns):
-        print("❌ Missing expected multiline reject format. Reject file is not repairable.")
+        print("  Missing expected multiline reject format. Reject file is not repairable.")
         print(f"Found columns: {list(df.columns)}")
         return None
 
@@ -63,9 +63,9 @@ def repair_reject_file(input_path, bank_name, output_path=None):
         # Output file
         output_file = output_path or input_path.replace("__REJECTS_", "__RECOVERED_")
         repaired_df.to_csv(output_file, index=False)
-        print(f"✅ Repaired and saved: {output_file}")
+        print(f"  Repaired and saved: {output_file}")
         return repaired_df
 
     except Exception as e:
-        print(f"❌ Exception during repair logic: {e}")
+        print(f"  Exception during repair logic: {e}")
         return None
