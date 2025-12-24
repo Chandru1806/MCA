@@ -49,6 +49,8 @@ def _clean_desc(text: str) -> str:
     if not isinstance(text, str):
         return text
     s = text
+    # Remove problematic Unicode characters
+    s = s.replace('→', '-').replace('←', '-').replace('•', '*').replace('₹', 'Rs')
     s = _HDFC_ADDR.sub("", s)
     s = re.split(r"(HDFC\s*BANK.*|HDFCBANKLIMITED.*)", s, flags=re.I)[0]
     s = _DATE_AMT_BAL_INLINE.sub("", s)
@@ -106,7 +108,7 @@ def _log_quality(file_base: str, bank: str, std_df: pd.DataFrame, rej_df: pd.Dat
     n_rej = 0 if rej_df is None else len(rej_df)
     total = n_std + n_rej
     rej_rate = (n_rej / total * 100.0) if total else 0.0
-    print(f"[INGEST] {file_base} [{bank}] → STD: {n_std}, REJECTS: {n_rej}, Total: {total}, Reject rate: {rej_rate:.1f}%")
+    print(f"[INGEST] {file_base} [{bank}] -> STD: {n_std}, REJECTS: {n_rej}, Total: {total}, Reject rate: {rej_rate:.1f}%")
 
 
 # =====================================================

@@ -53,6 +53,9 @@ def create_app():
     
     from app.routes.auth_routes import auth_bp
     app.register_blueprint(auth_bp)
+    
+    from app.routes.pdf_routes import pdf_bp
+    app.register_blueprint(pdf_bp)
 
     # Default route
     @app.get("/")

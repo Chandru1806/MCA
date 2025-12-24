@@ -148,3 +148,12 @@ class AuthService:
         db.session.commit()
         
         return {'message': 'User deactivated successfully'}, None, None
+    
+    @staticmethod
+    def refresh_access_token(profile_id):
+        access_token, _ = generate_tokens(profile_id)
+        return {
+            'access_token': access_token,
+            'token_type': 'Bearer',
+            'expires_in': 900
+        }

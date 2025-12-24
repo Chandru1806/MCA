@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended import get_jwt_identity
 from marshmallow import ValidationError
 from app.services.auth_service import AuthService
 from app.validators.auth_validator import SignupSchema, LoginSchema, UpdateUserSchema
@@ -103,4 +104,14 @@ class AuthController:
         
         except Exception as e:
             logger.error(f"Delete user error: {str(e)}")
+            return error_response("Server error", code="SERVER_ERROR", status=500)
+    
+    @staticmethod
+    def refresh_token():
+        try:
+            profile_id = get_jwt_identity()
+            result = AuthService.refresh_access_token(profile_id)
+            return success_response(result, "Token refreshed successfully", 200)
+        except Exception as e:
+            logger.error(f"Refresh token error: {str(e)}")
             return error_response("Server error", code="SERVER_ERROR", status=500)

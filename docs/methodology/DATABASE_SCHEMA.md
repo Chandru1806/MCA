@@ -72,39 +72,22 @@ Stores PDF metadata and processing status.
 
 ```sql
 CREATE TABLE public.bank_statements (
-    statement_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
+    file_id INTEGER PRIMARY KEY DEFAULT nextval('bank_statements_file_id_seq'),
     profile_id UUID NOT NULL,
     bank_name VARCHAR(50) NOT NULL,
-
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(500),
     file_size_bytes INTEGER,
-
     upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     processing_status VARCHAR(20) DEFAULT 'PENDING',
     error_message TEXT,
-
     extracted_csv_path VARCHAR(500),
     normalized_csv_path VARCHAR(500),
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_bankstatements_user
-        FOREIGN KEY (profile_id)
-        REFERENCES users(profile_id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT chk_processing_status
-        CHECK (processing_status IN (
-            'PENDING',
-            'PROCESSING',
-            'COMPLETED',
-            'FAILED',
-            'VERIFIED'
-        ))
+    
+    CONSTRAINT fk_bankstatements_user FOREIGN KEY (profile_id) REFERENCES users(profile_id) ON DELETE CASCADE,
+    CONSTRAINT chk_processing_status CHECK (processing_status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'VERIFIED'))
 );
 ```
 

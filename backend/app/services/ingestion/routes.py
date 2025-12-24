@@ -78,7 +78,7 @@ def upload():
         # --- Detect Bank ---
         bank = bank_hint or detect_bank(in_path)
         base = os.path.splitext(os.path.basename(in_path))[0]
-        print(f"📄 Processing {raw_name} → Detected Bank: {bank}")
+        print(f"[PDF] Processing {raw_name} -> Detected Bank: {bank}")
 
         try:
             # --- Parse Based on Bank ---
