@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>ExpenseIQ · Preprocess CSV</title>
+    <style>
+      :root {
+        --fg: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --bg: #ffffff;
+        --primary: #111827;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background: var(--bg);
+        color: var(--fg);
+        padding: 24px;
+        margin: 0;
+      }
+      h1, h2 { margin: 0 0 16px; }
+      .wrap { max-width: 920px; margin: 0 auto; }
+      .card {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+      }
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+      select, input[type=file] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .btn {
+        margin-top: 14px;
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #fff;
+        cursor: pointer;
+      }
+      .btn:hover { opacity: .92; }
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 6px 0 0;
+      }
+      .tips {
+        margin-top: 16px;
+        padding: 12px;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        background: #fafafa;
+      }
+      .back-link {
+        margin-top: 20px;
+        display: inline-block;
+        font-size: 14px;
+        color: #1d4ed8;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h2>ExpenseIQ · Step 3: Preprocess CSV</h2>
+
+      <div class="card">
+        <form action="/preprocess_csv" method="post" enctype="multipart/form-data">
+          <label>Select a CSV file to preprocess:</label>
+          <input type="file" name="csv_file" accept=".csv" required>
+          <p class="hint">This will automatically repair narration-only rows and create a <strong>__REPAIRED.csv</strong> version.</p>
+          <button class="btn" type="submit">🧹 Preprocess & Download Repaired CSV</button>
+        </form>
+
+        <div class="tips">
+          <strong>How it works:</strong>
+          <ul class="hint">
+            <li>Detects narration-only rows (where Debit/Credit/Balance are blank).</li>
+            <li>Merges those into the previous transaction automatically.</li>
+            <li>Saves the output as <code>filename__REPAIRED.csv</code>.</li>
+          </ul>
+        </div>
+
+        <a href="/ingestion" class="back-link">← Back to Upload Page</a>
+      </div>
+    </div>
+  </body>
+</html>

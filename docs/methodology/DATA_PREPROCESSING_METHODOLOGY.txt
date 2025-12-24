@@ -1,0 +1,88 @@
+================================================================================
+DATA PREPROCESSING METHODOLOGY FOR EXPENSEIQ
+================================================================================
+
+PROJECT: ExpenseIQ - Smart Personal Expense and Budget Advisor
+MODULE: modules/preprocessing/preprocess_csv.py
+PURPOSE: Normalize and repair bank statement data from CSV/Excel files
+
+================================================================================
+PREPROCESSING STEPS
+================================================================================
+
+1. DATA TYPE NORMALIZATION
+   - String values are converted to floating-point numbers
+   - Comma removal from numeric strings (e.g., "1,000" → 1000.0)
+   - Invalid or missing values are handled gracefully by returning None
+   - Implementation: safe_float() function
+
+2. MISSING DATA IMPUTATION
+   - Identifies rows with missing Debit_Amount, Credit_Amount, and Balance
+   - Uses balance-based inference algorithm to repair missing values
+   - Skips rows where surrounding balances are unavailable
+   - Implementation: repair_using_surrounding_balances() function
+
+3. BALANCE-BASED INFERENCE FORMULA
+   
+   Core Formula:
+   diff = previous_balance - next_balance
+   
+   Case 1 - If next row contains debit:
+   inferred_debit = diff - next_debit
+   new_balance = previous_balance - inferred_debit
+   
+   Case 2 - If next row contains credit:
+   inferred_credit = diff + next_credit
+   new_balance = previous_balance + inferred_credit
+   
+   Case 3 - Fallback (no debit or credit in next row):
+   inferred_debit = diff
+   new_balance = previous_balance - diff
+
+4. DATA VALIDATION
+   - Validates presence of required columns: Debit_Amount, Credit_Amount, Balance
+   - Raises error if any required column is missing
+   - Prevents processing of malformed data
+
+5. OUTPUT GENERATION
+   - Repaired data saved to new CSV file with "_NORMALIZED" suffix
+   - Original file preserved unchanged
+   - Example: input.csv → input_NORMALIZED.csv
+
+================================================================================
+ALGORITHM LOGIC
+================================================================================
+
+The preprocessing algorithm works on the principle that bank account balances
+must be consistent across transactions. When a transaction record is missing
+its debit/credit amount, the algorithm infers it by:
+
+1. Calculating the balance difference between surrounding rows
+2. Analyzing the next row's transaction type (debit or credit)
+3. Reverse-engineering the missing amount based on balance changes
+4. Updating the current row with inferred values
+
+This approach ensures data integrity by maintaining balance consistency
+throughout the statement.
+
+================================================================================
+LIMITATIONS
+================================================================================
+
+- Only repairs rows where BOTH surrounding rows have valid balances
+- Assumes balance calculations follow standard accounting rules
+- Cannot repair first or last row in dataset
+- Requires at least 3 consecutive rows for inference
+
+================================================================================
+USAGE
+================================================================================
+
+Command Line:
+python preprocess_csv.py --input <path_to_csv>
+
+Output:
+- Repaired CSV file with "_NORMALIZED" suffix
+- Console message confirming successful processing
+
+================================================================================

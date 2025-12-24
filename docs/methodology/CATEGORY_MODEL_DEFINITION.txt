@@ -1,0 +1,312 @@
+================================================================================
+CATEGORY MODEL DEFINITION - ExpenseIQ
+================================================================================
+
+1. OVERVIEW OF CATEGORY MODEL
+================================================================================
+The category model in OptimizedFinalClassifier uses a hybrid approach combining:
+   - Rule-based classification (keyword matching and regex patterns)
+   - Machine Learning classification (TF-IDF + Random Forest)
+   - Confidence scoring for each prediction
+
+
+2. MASTER CATEGORIES DEFINED
+================================================================================
+The system defines 10 primary expense categories:
+
+   a) FOOD
+      - Keywords: zomato, swiggy, dominos, thearogya, grandmaslil, asanbaibiriyani,
+        kitchenking, frozen bottle, chulhachaukida, manjal, madrascoffee,
+        edenparkcafete, sukkubhaifoodspriv, avs enterprises, blossombook,
+        mdp food, mdpfood, hotel sree vijayalaksh, narasus, narasus coffee,
+        murugan idli
+      - Purpose: Identifies food delivery and restaurant transactions
+
+   b) SHOPPING
+      - Keywords: amazon, flipkart, myntra, westside, reliancedigital, decathlon,
+        zudio, max retail, snitchapparels, greentrends, nagarjunaandhra,
+        sublrelements, mssterlingdeco, purple gra, gocolors, go colors,
+        the chennai silks, chennai silks, world of titan, worl d of tit,
+        new cotton collection, cotton collection, maha sports, sports design,
+        tamil nadu thunikkadai, thunikkadai
+      - Purpose: Identifies retail and e-commerce shopping transactions
+
+   c) TRAVEL
+      - Keywords: redbus, irctc, uber, ola, indianrailways, indian railways,
+        indian rai, chennaimetrorail, metropolitan transpo, indigo, iatapay,
+        iata pay, indigo.iatapay
+      - Purpose: Identifies transportation and travel-related expenses
+
+   d) BILLS
+      - Keywords: airtel, jio, bsnl, tataplay, tangedco, airtelpayments,
+        airteldirectupipo, jiohotstar, tataplayfiber, rbmlsolutionsindia,
+        icicimerchantservi, avighnaenterprises, eb bill, electricity bill
+      - Purpose: Identifies utility and subscription bill payments
+
+   e) ENTERTAINMENT
+      - Keywords: netflix, bookmyshow, bigtree, my11circle, wwwwoohoo,
+        executive lounge
+      - Purpose: Identifies entertainment and leisure expenses
+
+   f) SUBSCRIPTIONS
+      - Keywords: appleservices, openai, chatgp, youtube, youtubecybss
+      - Purpose: Identifies digital subscription services
+
+   g) HEALTH
+      - Keywords: apollo, shreeramdev medical, santhanam pharmacy, mercury,
+        apollo pharm, apollo pharmacy
+      - Purpose: Identifies healthcare and pharmacy expenses
+
+   h) GROCERIES
+      - Keywords: zepto, zeptonow, zeptomarketplace, amazonpay groceries,
+        easybazar, cn2easybazarsupe, cn1easybazarsuper, kpnfarmfresh,
+        shopwel mart, spar2167elemen, grace supermark, loyal worl,
+        loyal world, aswins hom, aswins home, sri maha superm,
+        sri maha super market, sri maha super, super market
+      - Purpose: Identifies grocery and food shopping transactions
+
+   i) EDUCATION
+      - Keywords: anna university, ccaannauniversity, apdfgurucom
+      - Purpose: Identifies educational institution payments
+
+   j) FUEL
+      - Keywords: parsons fuels, shreelpkpetropa, banu fuels, petrol bunk,
+        fuel station
+      - Purpose: Identifies fuel and petrol station expenses
+
+
+3. ADDITIONAL SPECIAL CATEGORIES
+================================================================================
+Beyond the 10 master categories, the system recognizes special transaction types:
+
+   a) ATM
+      - Trigger: Keywords "nwd", "atm wdl", "atm cash"
+      - Confidence: 0.95 (very high)
+      - Purpose: Identifies cash withdrawals
+
+   b) SALARY
+      - Trigger: Keywords "salary", "bulk posting" + "ppo"
+      - Confidence: 0.90-0.95
+      - Purpose: Identifies salary/income deposits
+
+   c) INTEREST
+      - Trigger: Keywords "interestpaid", "credit interest"
+      - Confidence: 0.95
+      - Purpose: Identifies interest earned
+
+   d) REFUND
+      - Trigger: Keywords "refund", "rev-upi"
+      - Confidence: 0.90
+      - Purpose: Identifies refund transactions
+
+   e) INTERNAL_TRANSFER
+      - Trigger: Keywords "csh dep (cdm)", regex pattern "by transfer.*(neft|imps|inb)"
+      - Confidence: 0.85
+      - Purpose: Identifies internal bank transfers
+
+   f) PERSON
+      - Trigger: Merchant name matches known person names (85 names in database)
+      - Confidence: 0.85
+      - Purpose: Identifies peer-to-peer transfers
+
+   g) OTHER
+      - Default category for unclassified transactions
+      - Confidence: 0.30 (very low)
+      - Purpose: Fallback for unknown transaction types
+
+
+4. CLASSIFICATION METHODOLOGY
+================================================================================
+
+STEP 1: MERCHANT EXTRACTION
+   - Extracts merchant name from transaction description
+   - Uses regex patterns to identify:
+     * UPI transactions: pattern "upi/[merchant]/[id]"
+     * POS transactions: pattern "pos.*?[merchant name]"
+     * Transfer transactions: pattern "transfer[merchant name]"
+   - Cleans extracted text by removing special characters
+
+STEP 2: RULE-BASED CLASSIFICATION
+   - Applies deterministic rules in priority order:
+     1. ATM detection (confidence 0.95)
+     2. Interest detection (confidence 0.95)
+     3. Salary detection (confidence 0.90-0.95)
+     4. Internal transfer detection (confidence 0.85)
+     5. Refund detection (confidence 0.90)
+     6. Regex pattern matching (confidence 0.80-0.90)
+     7. Keyword matching against master categories (confidence 0.90)
+     8. Person name detection (confidence 0.85)
+     9. Default "Other" (confidence 0.30)
+
+STEP 3: MACHINE LEARNING CLASSIFICATION (if trained)
+   - Only applied if rule confidence < 0.90
+   - Uses TF-IDF vectorization:
+     * Maximum features: 2000
+     * N-gram range: 1-3 (unigrams, bigrams, trigrams)
+   - Random Forest classifier:
+     * Number of estimators: 300
+     * Max depth: 25
+     * Random state: 42
+   - ML confidence is adjusted by multiplying by 0.90 factor
+   - Final prediction uses ML only if (ML_confidence * 0.90) > rule_confidence
+
+STEP 4: CONFIDENCE SCORING
+   - Each prediction includes a confidence score (0.0 to 1.0)
+   - High confidence (>= 0.90): Rule-based predictions
+   - Medium confidence (0.80-0.89): Regex or keyword matches
+   - Low confidence (< 0.30): Default "Other" category
+   - ML confidence: Adjusted by 0.90 multiplier for conservative estimates
+
+
+5. PERSON DETECTION MECHANISM
+================================================================================
+The system maintains a database of 85 known person names to identify P2P transfers:
+
+   Names include: murugadoss, rizwan, mugesh, srinivasan, sriramappab,
+   aadyabanashankari, afroz, manikandan, vabhinesh, chandragiriya, kunde,
+   varun, mudassir, shariff, govindagouda, ramanag, surinenianjali,
+   dhanikachalam, rahmathulla, khan, sivaprakash, raja, meenakshi,
+   radhakrish, balamurali, elangovan, palakolanu, venkata, ashanmuga,
+   sundaram, mrsuresh, punith, moneiruddin, laskar, harshavardhan,
+   niranjansubba, hegde, prdeep, kumar, prakash, kalimuthu, thajudeen,
+   mrahamed, ali, gnanasekar, akash, saiganesh, santhanam, bharathkumar,
+   maari, anil, sindhukumar, rmahesh, kumaresan, kuppan, theirani,
+   madaraje, urs, manjula, olekar, ancy, anand, venu, rahul, sriram,
+   rukmani, goutham, gouthamram, kamalesh, bagyaraj, selvamani, himakiran,
+   sandeep, prasath, paramasivan
+
+   Detection Logic:
+   - Excludes merchants with business keywords (ltd, pvt, services, etc.)
+   - Matches exact person names or partial name matches (>= 4 characters)
+   - Confirms with UPI/IMPS/NEFT transfer keywords
+   - Validates merchant has 2-3 alphabetic words
+
+
+6. REGEX PATTERN RULES
+================================================================================
+Special regex patterns for high-confidence classification:
+
+   1. FastTag/Toll Detection
+      - Pattern: "fastag|fasttag|toll"
+      - Category: Travel
+      - Confidence: 0.90
+
+   2. Hotel Detection
+      - Pattern: "\bhotel\b"
+      - Category: Food
+      - Confidence: 0.80
+
+   3. Supermarket Detection
+      - Pattern: "(super\s*market|supermart|mart\b)"
+      - Category: Groceries
+      - Confidence: 0.80
+
+   4. Chennai Silks Detection
+      - Pattern: "chennai\s*silks"
+      - Category: Shopping
+      - Confidence: 0.90
+
+   5. World of Titan Detection
+      - Pattern: "world\s+of\s+titan"
+      - Category: Shopping
+      - Confidence: 0.90
+
+   6. Cotton Collection Detection
+      - Pattern: "cotton\s+collection"
+      - Category: Shopping
+      - Confidence: 0.90
+
+   7. Bank Transfer Detection
+      - Pattern: "by\s+transfer.*(neft|imps|inb)"
+      - Category: Internal_Transfer
+      - Confidence: 0.85
+
+
+7. TRAINING PROCESS
+================================================================================
+The model training workflow:
+
+   INPUT: CSV files with transaction descriptions
+   
+   PROCESS:
+   1. Read and concatenate all CSV files
+   2. Extract merchant names from descriptions
+   3. Apply rule-based classification to all transactions
+   4. Generate ML text by combining merchant + cleaned description
+   5. Filter high-confidence transactions (confidence >= 0.85)
+   6. Remove "Other" category transactions
+   7. Vectorize filtered transactions using TF-IDF
+   8. Train Random Forest classifier on vectorized data
+   
+   OUTPUT: 
+   - Trained model ready for predictions
+   - DataFrame with merchant, rule category, confidence, and ML text columns
+   - Minimum 10 samples required for ML training
+   - Falls back to rule-based only if insufficient samples
+
+
+8. PREDICTION PROCESS
+================================================================================
+For each new transaction:
+
+   1. Extract merchant name from description
+   2. Apply rule-based classification
+   3. If rule confidence >= 0.90: Return rule prediction
+   4. If model not trained: Return rule prediction
+   5. If model trained:
+      - Vectorize transaction text
+      - Get ML prediction and confidence
+      - Adjust ML confidence by 0.90 factor
+      - Compare: if (ML_confidence * 0.90) > rule_confidence
+        * Return ML prediction
+      * Else: Return rule prediction
+   6. Output: (Category, Confidence_Score)
+
+
+9. OUTPUT FORMAT
+================================================================================
+Classified transactions are saved with additional columns:
+
+   - Description: Original transaction description
+   - Merchant: Extracted merchant name
+   - Category: Predicted expense category
+   - Confidence: Confidence score (0.0-1.0)
+   - Rule_Category: Category from rule-based classification
+   - Rule_Confidence: Confidence from rule-based classification
+   - ML_Text: Processed text used for ML vectorization
+
+   Output file naming: [original_filename]_optimized_final.csv
+
+
+10. KEY DESIGN FEATURES
+================================================================================
+
+   a) HYBRID APPROACH
+      - Combines rule-based (deterministic) with ML (probabilistic)
+      - Rule-based for high-confidence patterns
+      - ML for ambiguous cases
+
+   b) CONFIDENCE SCORING
+      - Enables filtering of uncertain predictions
+      - Supports decision-making on classification reliability
+      - Allows threshold-based filtering
+
+   c) MERCHANT EXTRACTION
+      - Isolates key transaction identifier
+      - Improves classification accuracy
+      - Enables person detection
+
+   d) SCALABILITY
+      - Supports multiple CSV file inputs
+      - Batch processing capability
+      - Extensible category system
+
+   e) DOMAIN-SPECIFIC
+      - Tailored to Indian banking context
+      - Recognizes local merchants and services
+      - Handles regional payment methods (UPI, NEFT, IMPS)
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

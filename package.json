@@ -1,0 +1,16 @@
+{
+  "name": "expenseiq",
+  "version": "1.0.0",
+  "description": "ExpenseIQ - Smart Personal Expense and Budget Advisor",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && python run.py",
+    "frontend": "cd frontend && npm run dev"
+  },
+  "keywords": ["expense", "budget", "finance"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
