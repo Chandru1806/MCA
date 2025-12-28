@@ -225,6 +225,275 @@
           }
         }
       ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Import Transactions from CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/import/{{file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "import", "{{file_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions by Statement ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/{{file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "{{file_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorization",
+      "item": [
+        {
+          "name": "Categorize Transactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorization/categorize/{{file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categorization", "categorize", "{{file_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Categorized Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorization/categories/{{file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "categorization", "categories", "{{file_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Category Spending",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/spending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "spending"]
+            }
+          }
+        },
+        {
+          "name": "Get Spending Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/trends?start_date=2024-01-01&end_date=2024-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "trends"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-01-01",
+                  "description": "Optional: Start date in YYYY-MM-DD format"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-12-31",
+                  "description": "Optional: End date in YYYY-MM-DD format"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Forecast Savings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_limit\": 5000,\n  \"target_month\": \"2025-03-01\",\n  \"categories\": [\"Food\", \"Shopping\"],\n  \"save_budget\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/forecast",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "forecast"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Budgets",
+      "item": [
+        {
+          "name": "Get All Budgets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/budgets/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "budgets", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Budget by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/budgets/Food?budget_month=2025-03-01",
+              "host": ["{{base_url}}"],
+              "path": ["api", "budgets", "Food"],
+              "query": [
+                {
+                  "key": "budget_month",
+                  "value": "2025-03-01",
+                  "description": "Optional: Filter by specific month"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Budget",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/budgets/{{budget_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "budgets", "{{budget_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Preference",
+      "item": [
+        {
+          "name": "Get User Preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/preference",
+              "host": ["{{base_url}}"],
+              "path": ["api", "preference"]
+            }
+          }
+        },
+        {
+          "name": "Update User Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"address_line_1\": \"123 Main Street\",\n  \"address_line_2\": \"Apartment 4B\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/preference",
+              "host": ["{{base_url}}"],
+              "path": ["api", "preference"]
+            }
+          }
+        }
+      ]
     }
   ]
 }

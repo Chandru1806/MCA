@@ -56,6 +56,24 @@ def create_app():
     
     from app.routes.pdf_routes import pdf_bp
     app.register_blueprint(pdf_bp)
+    
+    from app.controllers.transaction_controller import transaction_bp
+    app.register_blueprint(transaction_bp, url_prefix='/api/transactions')
+    
+    from app.controllers.categorization_controller import categorization_bp
+    app.register_blueprint(categorization_bp, url_prefix='/api/categorization')
+    
+    from app.controllers.dashboard_controller import dashboard_bp
+    app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+    
+    from app.controllers.analytics_controller import analytics_bp
+    app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+    
+    from app.controllers.budget_controller import budget_bp
+    app.register_blueprint(budget_bp, url_prefix='/api/budgets')
+    
+    from app.routes.preference_routes import preference_bp
+    app.register_blueprint(preference_bp)
 
     # Default route
     @app.get("/")
