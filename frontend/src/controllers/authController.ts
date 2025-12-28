@@ -1,0 +1,72 @@
+import { authService, LoginCredentials, SignupCredentials } from '../services/authService';
+import { useAuthStore } from '../store/authStore';
+
+export interface ValidationErrors {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+export const authController = {
+  validateLogin: (email: string, password: string): ValidationErrors => {
+    const errors: ValidationErrors = {};
+
+    if (!email.trim()) errors.email = 'Email is required';
+    if (!password.trim()) errors.password = 'Password is required';
+
+    return errors;
+  },
+
+  validateSignup: (email: string, password: string, confirmPassword: string): ValidationErrors => {
+    const errors: ValidationErrors = {};
+
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!EMAIL_REGEX.test(email)) {
+      errors.email = 'Invalid email format';
+    }
+
+    if (!password.trim()) {
+      errors.password = 'Password is required';
+    } else if (!PASSWORD_REGEX.test(password)) {
+      errors.password = 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number';
+    }
+
+    if (!confirmPassword.trim()) {
+      errors.confirmPassword = 'Confirm password is required';
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    return errors;
+  },
+
+  handleLogin: async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await authService.login(credentials);
+      useAuthStore.getState().login(response.token, response.user);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Login failed. Please try again.',
+      };
+    }
+  },
+
+  handleSignup: async (credentials: SignupCredentials): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await authService.signup(credentials);
+      useAuthStore.getState().login(response.token, response.user);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Signup failed. Please try again.',
+      };
+    }
+  },
+};

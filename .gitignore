@@ -86,3 +86,10 @@ cython_debug/
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Storage folders
+storage/

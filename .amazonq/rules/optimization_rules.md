@@ -9,6 +9,12 @@ If there is nothing to optimize, simply state: “The correct module has been cr
 **Optimize later:**
 - Auto-detection logic for bank_name is not working properly. Currently using manual bank selection as workaround. Need to fix detect_bank() function to properly identify HDFC, KOTAK, SBI, ICICI, AXIS, CUB, IDFC from PDF patterns.
 
+If auto-detection is not working, the bank name can be selected from a dropdown list. This functionality has already been implemented in upload.html, and it can be verified.
+
+Both auto-detection and manual bank selection should work together.
+
+For now in the code add one parameter bank: with all bank names. Later we will fix the issue.
+
 
 ## Transaction Import Module
 
