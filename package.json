@@ -4,8 +4,10 @@
   "description": "ExpenseIQ - Smart Personal Expense and Budget Advisor",
   "scripts": {
     "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "start:cors": "concurrently \"npm run backend\" \"npm run frontend:cors\"",
     "backend": "cd backend && python run.py",
-    "frontend": "cd frontend && npm run dev"
+    "frontend": "cd frontend && npm run dev",
+    "frontend:cors": "cd frontend && npm run dev:cors"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
