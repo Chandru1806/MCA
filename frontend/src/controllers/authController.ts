@@ -2,6 +2,7 @@ import { authService, LoginCredentials, SignupCredentials } from '../services/au
 import { useAuthStore } from '../store/authStore';
 
 export interface ValidationErrors {
+  username?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -9,19 +10,31 @@ export interface ValidationErrors {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 export const authController = {
-  validateLogin: (email: string, password: string): ValidationErrors => {
+  validateLogin: (username: string, password: string): ValidationErrors => {
     const errors: ValidationErrors = {};
 
-    if (!email.trim()) errors.email = 'Email is required';
+    if (!username.trim()) {
+      errors.username = 'Username is required';
+    } else if (!USERNAME_REGEX.test(username)) {
+      errors.username = 'Username must be 3-20 characters and contain only letters, numbers, and underscores';
+    }
+
     if (!password.trim()) errors.password = 'Password is required';
 
     return errors;
   },
 
-  validateSignup: (email: string, password: string, confirmPassword: string): ValidationErrors => {
+  validateSignup: (username: string, email: string, password: string, confirmPassword: string): ValidationErrors => {
     const errors: ValidationErrors = {};
+
+    if (!username.trim()) {
+      errors.username = 'Username is required';
+    } else if (!USERNAME_REGEX.test(username)) {
+      errors.username = 'Username must be 3-20 characters and contain only letters, numbers, and underscores';
+    }
 
     if (!email.trim()) {
       errors.email = 'Email is required';

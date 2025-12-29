@@ -1,4 +1,6 @@
 import React from 'react';
+import { Header } from '../common/Header';
+import { Footer } from '../common/Footer';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -8,31 +10,35 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) => {
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.logo}>ExpenseIQ</h1>
-          <p style={styles.tagline}>Smart personal expense and budget advisor</p>
-        </div>
-        
-        <div style={styles.content}>
-          <h2 style={styles.title}>{title}</h2>
-          {subtitle && <p style={styles.subtitle}>{subtitle}</p>}
-          {children}
+    <div style={styles.wrapper}>
+      <Header />
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.content}>
+            <h2 style={styles.title}>{title}</h2>
+            {subtitle && <p style={styles.subtitle}>{subtitle}</p>}
+            {children}
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
 
 const styles = {
-  container: {
+  wrapper: {
     minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    backgroundColor: '#f7f8fa',
+  },
+  container: {
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f7f8fa',
-    padding: '20px',
+    padding: '40px 20px',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -41,25 +47,6 @@ const styles = {
     width: '100%',
     maxWidth: '440px',
     overflow: 'hidden',
-  },
-  header: {
-    backgroundColor: '#f7f8fa',
-    padding: '32px 40px 24px',
-    textAlign: 'center' as const,
-    borderBottom: '1px solid #e5e7eb',
-  },
-  logo: {
-    fontSize: '32px',
-    fontWeight: '700',
-    color: '#1e40af',
-    margin: '0 0 8px 0',
-    letterSpacing: '-0.5px',
-  },
-  tagline: {
-    fontSize: '13px',
-    color: '#6b7280',
-    margin: 0,
-    fontWeight: '400',
   },
   content: {
     padding: '40px',

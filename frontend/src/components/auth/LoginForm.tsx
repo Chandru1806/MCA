@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../common/Input';
+import { LoadingSpinner } from '../common/LoadingSpinner';
 import { authController } from '../../controllers/authController';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     setApiError('');
 
-    const validationErrors = authController.validateLogin(email, password);
+    const validationErrors = authController.validateLogin(username, password);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -24,7 +25,7 @@ export const LoginForm: React.FC = () => {
     setErrors({});
     setLoading(true);
 
-    const result = await authController.handleLogin({ email, password });
+    const result = await authController.handleLogin({ username, password });
 
     setLoading(false);
 
@@ -35,6 +36,15 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <LoadingSpinner size="medium" />
+        <p style={styles.loadingText}>Logging in...</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       {apiError && (
@@ -42,12 +52,12 @@ export const LoginForm: React.FC = () => {
       )}
 
       <Input
-        type="email"
-        label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Enter your email address"
-        error={errors.email}
+        type="text"
+        label="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Enter your username"
+        error={errors.username}
         required
       />
 
@@ -65,7 +75,7 @@ export const LoginForm: React.FC = () => {
         ...styles.button,
         ...(loading ? styles.buttonDisabled : {}),
       }}>
-        {loading ? 'Logging in...' : 'Login'}
+        Login
       </button>
 
       <div style={styles.footer}>
@@ -79,6 +89,17 @@ export const LoginForm: React.FC = () => {
 };
 
 const styles = {
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    padding: '40px 0',
+  },
+  loadingText: {
+    marginTop: '16px',
+    fontSize: '14px',
+    color: '#6b7280',
+  },
   errorBox: {
     backgroundColor: '#fef2f2',
     color: '#dc2626',

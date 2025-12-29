@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../common/Input';
+import { LoadingSpinner } from '../common/LoadingSpinner';
 import { authController } from '../../controllers/authController';
 
 export const SignupForm: React.FC = () => {
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; confirmPassword?: string }>({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +18,7 @@ export const SignupForm: React.FC = () => {
     e.preventDefault();
     setApiError('');
 
-    const validationErrors = authController.validateSignup(email, password, confirmPassword);
+    const validationErrors = authController.validateSignup(username, email, password, confirmPassword);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -25,7 +27,7 @@ export const SignupForm: React.FC = () => {
     setErrors({});
     setLoading(true);
 
-    const result = await authController.handleSignup({ email, password, confirmPassword });
+    const result = await authController.handleSignup({ username, email, password, confirmPassword });
 
     setLoading(false);
 
@@ -36,11 +38,30 @@ export const SignupForm: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <LoadingSpinner size="medium" />
+        <p style={styles.loadingText}>Creating account...</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       {apiError && (
         <div style={styles.errorBox}>{apiError}</div>
       )}
+
+      <Input
+        type="text"
+        label="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Choose a username"
+        error={errors.username}
+        required
+      />
 
       <Input
         type="email"
@@ -76,7 +97,7 @@ export const SignupForm: React.FC = () => {
         ...styles.button,
         ...(loading ? styles.buttonDisabled : {}),
       }}>
-        {loading ? 'Creating account...' : 'Create Account'}
+        Create Account
       </button>
 
       <div style={styles.footer}>
@@ -90,6 +111,17 @@ export const SignupForm: React.FC = () => {
 };
 
 const styles = {
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    padding: '40px 0',
+  },
+  loadingText: {
+    marginTop: '16px',
+    fontSize: '14px',
+    color: '#6b7280',
+  },
   errorBox: {
     backgroundColor: '#fef2f2',
     color: '#dc2626',

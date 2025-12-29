@@ -15,8 +15,12 @@ export const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-md px-6 py-4">
       <div className="flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center">
+        <Link to="/dashboard" className="flex items-center gap-3">
           <img src={LOGO_PATH} alt="ExpenseIQ" className="h-10" />
+          <div>
+            <h1 className="text-xl font-bold text-blue-700">ExpenseIQ</h1>
+            <p className="text-xs text-gray-500">Smart expense advisor</p>
+          </div>
         </Link>
         
         <div className="flex items-center gap-6">
@@ -25,7 +29,7 @@ export const Navbar: React.FC = () => {
           <Link to="/analytics" className="text-gray-700 hover:text-blue-600">Analytics</Link>
           
           <div className="flex items-center gap-3 border-l pl-6">
-            <span className="text-sm text-gray-600">{user?.email}</span>
+            <span className="text-sm text-gray-600">{user?.username || user?.email}</span>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
