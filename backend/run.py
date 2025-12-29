@@ -19,7 +19,7 @@ def create_app():
     app = Flask(__name__, template_folder='app/templates')
     
     # Enable CORS for frontend communication
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+    CORS(app, origins="http://localhost:5173")
 
     # Required for flash messages in repair route
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
