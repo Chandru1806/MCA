@@ -58,7 +58,7 @@ export const SignupForm: React.FC = () => {
         label="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        placeholder="Choose a username"
+        placeholder="Enter a username"
         error={errors.username}
         required
       />
