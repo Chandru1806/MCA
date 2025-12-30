@@ -1,6 +1,9 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 
 class SignupSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+    
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     username = fields.Str(required=True, validate=validate.Length(min=3, max=80))
