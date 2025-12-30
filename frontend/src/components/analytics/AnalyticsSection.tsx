@@ -52,7 +52,14 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ categories }
 
       setSavingsReport(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to generate forecast');
+      console.error('Forecast error:', err);
+      if (err.response?.status === 401) {
+        setError('Unauthorized: Please login again');
+      } else if (err.response?.data?.error?.message) {
+        setError(err.response.data.error.message);
+      } else {
+        setError(err.response?.data?.error || 'Failed to generate forecast');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,11 +87,11 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ categories }
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Target Month</label>
+              <label style={styles.label}>Target Date</label>
               <input
-                type="month"
+                type="date"
                 value={targetMonth}
-                onChange={(e) => setBudgetLimit(e.target.value + '-01')}
+                onChange={(e) => setTargetMonth(e.target.value)}
                 style={styles.input}
               />
             </div>

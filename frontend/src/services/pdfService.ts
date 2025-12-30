@@ -7,7 +7,7 @@ export const pdfService = {
     formData.append('pdf', file);
     formData.append('bank', bank);
 
-    const response = await apiClient.post('/pdf/upload', formData, {
+    const response = await apiClient.post('/api/pdf/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -17,6 +17,6 @@ export const pdfService = {
   },
 
   downloadCSV: (filename: string): string => {
-    return `${apiClient.defaults.baseURL}/pdf/download/${filename}`;
+    return `${apiClient.defaults.baseURL}/api/pdf/download/${filename}`;
   },
 };

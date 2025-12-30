@@ -111,7 +111,7 @@ export const PDFUploader: React.FC<PDFUploaderProps> = ({ onFileSelect, disabled
           style={styles.select}
           disabled={disabled}
         >
-          <option value="AUTO">Auto-detect or select manually</option>
+          {/* <option value="AUTO">Auto-detect or select manually</option> */}
           <option value="HDFC">HDFC</option>
           <option value="KOTAK">KOTAK</option>
           <option value="SBI">SBI</option>

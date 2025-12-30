@@ -16,18 +16,26 @@ export const UploadResult: React.FC<UploadResultProps> = ({ result, error, onRet
     }
   }, [result]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!result?.csv_filename) return;
     
-    const token = localStorage.getItem('token');
-    const downloadUrl = `${apiClient.defaults.baseURL}/pdf/download/${result.csv_filename}?token=${token}`;
-    
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = result.csv_filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const response = await apiClient.get(`/api/pdf/download/${result.csv_filename}`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.csv_filename;
+      document.body.appendChild(link);
+      link.click();
+      link.parentChild?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download CSV file');
+    }
   };
 
   if (!result && !error) return null;

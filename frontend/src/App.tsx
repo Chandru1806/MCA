@@ -13,6 +13,8 @@ import { PDFUploadPage } from './pages/PDFUploadPage';
 import { PreprocessPage } from './pages/PreprocessPage';
 import { CategorizationPage } from './pages/CategorizationPage';
 import { BudgetAdvisorPage } from './pages/BudgetAdvisorPage';
+import PreferencePage from './pages/PreferencePage';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,8 @@ function App() {
               <Route path="/preprocess" element={<PreprocessPage />} />
               <Route path="/categorize" element={<CategorizationPage />} />
               <Route path="/advisor" element={<BudgetAdvisorPage />} />
+              <Route path="/preferences" element={<PreferencePage />} />
+              <Route path="/change-password" element={<ChangePasswordPage />} />
             </Route>
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>

@@ -9,6 +9,22 @@ interface SavingsReportDisplayProps {
 
 export const SavingsReportDisplay: React.FC<SavingsReportDisplayProps> = ({ data, targetMonth }) => {
   const totalSavings = data.reduce((sum, item) => sum + item.savings, 0);
+  const totalCurrentSpending = data.reduce((sum, item) => sum + item.current_spending, 0);
+  const totalBudgetLimit = data.reduce((sum, item) => sum + item.budget_limit, 0);
+  const savingsPercentage = totalCurrentSpending > 0 ? ((totalSavings / totalCurrentSpending) * 100).toFixed(1) : 0;
+
+  const calculateRiskLevel = (savings: number, currentSpending: number) => {
+    const savingsRate = (savings / currentSpending) * 100;
+    if (savingsRate > 40) return { level: 'High Risk', color: '#E74C3C', icon: '⚠️' };
+    if (savingsRate > 20) return { level: 'Medium Risk', color: '#F39C12', icon: '✓' };
+    return { level: 'Achievable', color: '#50C878', icon: '✓' };
+  };
+
+  const calculateMonthsToGoal = (savings: number) => {
+    if (savings <= 0) return 0;
+    // Assuming user wants to save ₹100,000 or 12 months as benchmark
+    return Math.ceil(100000 / savings);
+  };
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -59,48 +75,125 @@ export const SavingsReportDisplay: React.FC<SavingsReportDisplayProps> = ({ data
 
   return (
     <div style={styles.container}>
-      <h4 style={styles.title}>Savings Report</h4>
+      <h4 style={styles.title}>📊 Detailed Savings Report</h4>
       
+      {/* Summary Cards */}
+      <div style={styles.summaryGrid}>
+        <div style={styles.summaryCard}>
+          <div style={styles.summaryLabel}>Total Monthly Savings</div>
+          <div style={styles.summaryValue}>₹{totalSavings.toFixed(2)}</div>
+          <div style={styles.summarySubtext}>{savingsPercentage}% of current spending</div>
+        </div>
+        
+        <div style={styles.summaryCard}>
+          <div style={styles.summaryLabel}>Current Spending</div>
+          <div style={styles.summaryValue}>₹{totalCurrentSpending.toFixed(2)}</div>
+          <div style={styles.summarySubtext}>Across {data.length} categories</div>
+        </div>
+        
+        <div style={styles.summaryCard}>
+          <div style={styles.summaryLabel}>New Budget Target</div>
+          <div style={styles.summaryValue}>₹{totalBudgetLimit.toFixed(2)}</div>
+          <div style={styles.summarySubtext}>Reduction needed</div>
+        </div>
+        
+        <div style={styles.summaryCard}>
+          <div style={styles.summaryLabel}>Annual Savings Potential</div>
+          <div style={{...styles.summaryValue, color: '#50C878'}}>₹{(totalSavings * 12).toFixed(2)}</div>
+          <div style={styles.summarySubtext}>If sustained for 12 months</div>
+        </div>
+      </div>
+
+      {/* Detailed Report */}
       <div style={styles.reportList}>
-        {data.map((item) => (
-          <div key={item.category} style={styles.reportItem}>
-            <div style={styles.categoryHeader}>
-              <span style={styles.categoryName}>{item.category}</span>
-              <span style={styles.savingsAmount}>
-                Save ₹{item.savings.toFixed(2)}
-              </span>
-            </div>
-            
-            <div style={styles.details}>
-              <div style={styles.detailRow}>
-                <span>Current Spending:</span>
-                <span style={styles.detailValue}>₹{item.current_spending.toFixed(2)}</span>
+        {data.map((item) => {
+          const risk = calculateRiskLevel(item.savings, item.current_spending);
+          const savingsPercent = ((item.savings / item.current_spending) * 100).toFixed(1);
+          const reductionPercent = ((item.savings / item.current_spending) * 100).toFixed(1);
+          
+          return (
+            <div key={item.category} style={styles.reportItem}>
+              <div style={styles.categoryHeader}>
+                <div>
+                  <span style={styles.categoryName}>{item.category}</span>
+                  <span style={{...styles.riskBadge, borderColor: risk.color, color: risk.color}}>
+                    {risk.icon} {risk.level}
+                  </span>
+                </div>
+                <span style={{...styles.savingsAmount, color: risk.color}}>
+                  ₹{item.savings.toFixed(2)}
+                </span>
               </div>
-              <div style={styles.detailRow}>
-                <span>Budget Limit:</span>
-                <span style={styles.detailValue}>₹{item.budget_limit.toFixed(2)}</span>
+              
+              <div style={styles.analyticsGrid}>
+                <div style={styles.analyticCard}>
+                  <div style={styles.analyticLabel}>Current Spending</div>
+                  <div style={styles.analyticValue}>₹{item.current_spending.toFixed(2)}</div>
+                </div>
+                
+                <div style={styles.analyticCard}>
+                  <div style={styles.analyticLabel}>Target Budget</div>
+                  <div style={styles.analyticValue}>₹{item.budget_limit.toFixed(2)}</div>
+                </div>
+                
+                <div style={styles.analyticCard}>
+                  <div style={styles.analyticLabel}>Reduction %</div>
+                  <div style={styles.analyticValue}>{reductionPercent}%</div>
+                </div>
+                
+                <div style={styles.analyticCard}>
+                  <div style={styles.analyticLabel}>Annual Savings</div>
+                  <div style={{...styles.analyticValue, color: '#50C878'}}>₹{(item.savings * 12).toFixed(2)}</div>
+                </div>
+              </div>
+              
+              <div style={styles.progressSection}>
+                <div style={styles.progressLabel}>
+                  <span>Budget Utilization</span>
+                  <span>{((item.budget_limit / item.current_spending) * 100).toFixed(0)}%</span>
+                </div>
+                <div style={styles.progressBar}>
+                  <div 
+                    style={{
+                      ...styles.progressFill,
+                      width: `${Math.min((item.budget_limit / item.current_spending) * 100, 100)}%`,
+                      backgroundColor: risk.color
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div style={styles.tipBox}>
+                <span style={styles.tipTitle}>💡 Insight:</span>
+                <span style={styles.tipText}>
+                  To achieve your {item.category} budget goal, reduce spending by ₹{item.savings.toFixed(2)} ({reductionPercent}%).
+                  {item.savings > 0 && item.savings > item.budget_limit * 0.5 && 
+                    ' This is challenging - consider a phased approach.'}
+                </span>
               </div>
             </div>
-            
-            <div style={styles.progressBar}>
-              <div 
-                style={{
-                  ...styles.progressFill,
-                  width: `${Math.min((item.budget_limit / item.current_spending) * 100, 100)}%`
-                }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
-      <div style={styles.totalSection}>
-        <span style={styles.totalLabel}>Total Savings Potential:</span>
-        <span style={styles.totalValue}>₹{totalSavings.toFixed(2)}</span>
+      {/* Summary Footer */}
+      <div style={styles.summaryFooter}>
+        <div style={styles.footerItem}>
+          <span>Total Categories:</span>
+          <span style={styles.footerValue}>{data.length}</span>
+        </div>
+        <div style={styles.footerItem}>
+          <span>Months to Save ₹100K:</span>
+          <span style={styles.footerValue}>{calculateMonthsToGoal(totalSavings)} months</span>
+        </div>
+        <div style={styles.footerItem}>
+          <span>Avg Savings per Category:</span>
+          <span style={styles.footerValue}>₹{(totalSavings / data.length).toFixed(2)}</span>
+        </div>
       </div>
       
       <button onClick={handleDownloadPDF} style={styles.downloadButton}>
-        Download PDF Report
+        📄 Download Detailed PDF Report
       </button>
     </div>
   );
@@ -114,10 +207,39 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '8px'
   },
   title: {
-    fontSize: '16px',
+    fontSize: '18px',
     fontWeight: 'bold',
     color: '#333',
     marginBottom: '20px'
+  },
+  summaryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '15px',
+    marginBottom: '25px'
+  },
+  summaryCard: {
+    padding: '15px',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+    borderLeft: '4px solid #4A90E2'
+  },
+  summaryLabel: {
+    fontSize: '12px',
+    color: '#666',
+    fontWeight: '500',
+    marginBottom: '5px'
+  },
+  summaryValue: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: '5px'
+  },
+  summarySubtext: {
+    fontSize: '11px',
+    color: '#999'
   },
   reportList: {
     display: 'flex',
@@ -126,47 +248,75 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '20px'
   },
   reportItem: {
-    padding: '15px',
+    padding: '20px',
     backgroundColor: '#fff',
     borderRadius: '8px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+    borderTop: '3px solid #4A90E2'
   },
   categoryHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px'
+    alignItems: 'flex-start',
+    marginBottom: '15px',
+    gap: '10px'
   },
   categoryName: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: '#333'
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#333',
+    marginRight: '10px'
+  },
+  riskBadge: {
+    fontSize: '12px',
+    padding: '4px 8px',
+    border: '1px solid',
+    borderRadius: '4px',
+    fontWeight: '600'
   },
   savingsAmount: {
-    fontSize: '16px',
+    fontSize: '18px',
     fontWeight: 'bold',
     color: '#50C878'
   },
-  details: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-    marginBottom: '12px'
+  analyticsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+    gap: '10px',
+    marginBottom: '15px'
   },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '13px',
-    color: '#666'
+  analyticCard: {
+    padding: '10px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '6px',
+    textAlign: 'center' as const
   },
-  detailValue: {
-    fontWeight: '600',
+  analyticLabel: {
+    fontSize: '11px',
+    color: '#666',
+    fontWeight: '500',
+    marginBottom: '3px'
+  },
+  analyticValue: {
+    fontSize: '14px',
+    fontWeight: 'bold',
     color: '#333'
   },
+  progressSection: {
+    marginBottom: '15px'
+  },
+  progressLabel: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '12px',
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: '6px'
+  },
   progressBar: {
-    height: '8px',
+    height: '10px',
     backgroundColor: '#e0e0e0',
-    borderRadius: '4px',
+    borderRadius: '5px',
     overflow: 'hidden'
   },
   progressFill: {
@@ -174,29 +324,44 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#4A90E2',
     transition: 'width 0.3s ease'
   },
-  totalSection: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  tipBox: {
+    padding: '12px',
+    backgroundColor: '#f0f7ff',
+    borderLeft: '3px solid #4A90E2',
+    borderRadius: '4px',
+    fontSize: '12px'
+  },
+  tipTitle: {
+    fontWeight: '700',
+    color: '#4A90E2',
+    marginRight: '5px'
+  },
+  tipText: {
+    color: '#666'
+  },
+  summaryFooter: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '15px',
     padding: '15px',
     backgroundColor: '#fff',
     borderRadius: '8px',
     marginBottom: '15px'
   },
-  totalLabel: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#333'
+  footerItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '13px',
+    color: '#666'
   },
-  totalValue: {
-    fontSize: '20px',
+  footerValue: {
     fontWeight: 'bold',
-    color: '#50C878'
+    color: '#333'
   },
   downloadButton: {
     width: '100%',
-    padding: '12px',
-    backgroundColor: '#50C878',
+    padding: '14px',
+    backgroundColor: '#4A90E2',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
