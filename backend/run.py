@@ -21,7 +21,7 @@ def create_app():
     # Enable CORS for frontend communication with explicit settings
     cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
     CORS(app, 
-         resources={r"/api/*": {"origins": cors_origins}},
+         resources={r"/*": {"origins": cors_origins}},
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization", "Accept"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
