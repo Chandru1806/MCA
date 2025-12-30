@@ -28,3 +28,7 @@ def update_user(profile_id):
 @auth_bp.route('/profiles/<uuid:profile_id>', methods=['DELETE'])
 def delete_user(profile_id):
     return AuthController.delete_user(profile_id)
+
+@auth_bp.route('/verify-email', methods=['POST'])
+def verify_email():
+    return AuthController.verify_email()

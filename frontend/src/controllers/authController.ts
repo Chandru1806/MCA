@@ -2,6 +2,8 @@ import { authService, LoginCredentials, SignupCredentials } from '../services/au
 import { useAuthStore } from '../store/authStore';
 
 export interface ValidationErrors {
+  firstName?: string;
+  lastName?: string;
   username?: string;
   email?: string;
   password?: string;
@@ -27,8 +29,16 @@ export const authController = {
     return errors;
   },
 
-  validateSignup: (username: string, email: string, password: string, confirmPassword: string): ValidationErrors => {
+  validateSignup: (firstName: string, lastName: string, username: string, email: string, password: string, confirmPassword: string): ValidationErrors => {
     const errors: ValidationErrors = {};
+
+    if (!firstName.trim()) {
+      errors.firstName = 'First name is required';
+    }
+
+    if (!lastName.trim()) {
+      errors.lastName = 'Last name is required';
+    }
 
     if (!username.trim()) {
       errors.username = 'Username is required';

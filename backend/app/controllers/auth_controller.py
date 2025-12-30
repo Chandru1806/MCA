@@ -115,3 +115,23 @@ class AuthController:
         except Exception as e:
             logger.error(f"Refresh token error: {str(e)}")
             return error_response("Server error", code="SERVER_ERROR", status=500)
+    
+    @staticmethod
+    def verify_email():
+        try:
+            data = request.get_json()
+            email = data.get('email')
+            
+            if not email:
+                return error_response("Email is required", code="INVALID_INPUT", status=400)
+            
+            result, error_msg, error_code = AuthService.verify_email(email)
+            
+            if error_msg:
+                return error_response(error_msg, code=error_code, status=404)
+            
+            return success_response(result, "Email verified successfully", 200)
+        
+        except Exception as e:
+            logger.error(f"Verify email error: {str(e)}")
+            return error_response("Server error", code="SERVER_ERROR", status=500)

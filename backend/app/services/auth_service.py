@@ -164,3 +164,12 @@ class AuthService:
             'token_type': 'Bearer',
             'expires_in': 900
         }
+    
+    @staticmethod
+    def verify_email(email):
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return None, "Email not found", "EMAIL_NOT_FOUND"
+        
+        return {'exists': True, 'username': user.username}, None, None

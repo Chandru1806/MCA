@@ -6,11 +6,13 @@ import { authController } from '../../controllers/authController';
 
 export const SignupForm: React.FC = () => {
   const navigate = useNavigate();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; username?: string; email?: string; password?: string; confirmPassword?: string }>({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export const SignupForm: React.FC = () => {
     e.preventDefault();
     setApiError('');
 
-    const validationErrors = authController.validateSignup(username, email, password, confirmPassword);
+    const validationErrors = authController.validateSignup(firstName, lastName, username, email, password, confirmPassword);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -27,7 +29,7 @@ export const SignupForm: React.FC = () => {
     setErrors({});
     setLoading(true);
 
-    const result = await authController.handleSignup({ username, email, password, confirmPassword });
+    const result = await authController.handleSignup({ first_name: firstName, last_name: lastName, username, email, password, confirmPassword });
 
     setLoading(false);
 
@@ -52,6 +54,26 @@ export const SignupForm: React.FC = () => {
       {apiError && (
         <div style={styles.errorBox}>{apiError}</div>
       )}
+
+      <Input
+        type="text"
+        label="First Name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        placeholder="Enter your first name"
+        error={errors.firstName}
+        required
+      />
+
+      <Input
+        type="text"
+        label="Last Name"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        placeholder="Enter your last name"
+        error={errors.lastName}
+        required
+      />
 
       <Input
         type="text"

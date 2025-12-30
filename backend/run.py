@@ -21,11 +21,12 @@ def create_app():
     # Enable CORS for frontend communication with explicit settings
     cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
     CORS(app, 
-         origins=cors_origins, 
+         resources={r"/api/*": {"origins": cors_origins}},
          supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         expose_headers=["Content-Type"])
+         allow_headers=["Content-Type", "Authorization", "Accept"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+         expose_headers=["Content-Type", "Authorization"],
+         max_age=3600)
 
     # Required for flash messages in repair route
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
