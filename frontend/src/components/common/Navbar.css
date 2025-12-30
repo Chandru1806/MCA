@@ -1,0 +1,8 @@
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.user-button:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
