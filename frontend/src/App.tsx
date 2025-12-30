@@ -41,7 +41,7 @@ function App() {
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/upload" element={<PDFUploadPage />} />
-              <Route path="/preprocess" element={<PreprocessPage />} />
+              <Route path="/preprocessing" element={<PreprocessPage />} />
               <Route path="/categorize" element={<CategorizationPage />} />
               <Route path="/advisor" element={<BudgetAdvisorPage />} />
               <Route path="/preferences" element={<PreferencePage />} />
