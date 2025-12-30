@@ -101,8 +101,15 @@ class AuthService:
         
         old_values = user.to_dict()
         
+        # Handle password change separately
+        if 'password' in update_data:
+            password_hash = bcrypt.hashpw(update_data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            user.password_hash = password_hash
+            update_data.pop('password')  # Remove from update_data to avoid duplicate processing
+        
+        # Update other allowed fields
         for key, value in update_data.items():
-            if hasattr(user, key) and key not in ['profile_id', 'username', 'password_hash', 'created_at', 'is_active']:
+            if hasattr(user, key) and key not in ['profile_id', 'username', 'password_hash', 'created_at', 'is_active', 'phone', 'city', 'state']:
                 setattr(user, key, value)
         
         user.updated_at = datetime.utcnow()

@@ -23,7 +23,7 @@ const styles = {
     maxWidth: '1200px',
     margin: '0 auto',
     padding: '0 20px',
-    textAlign: 'center' as const,
+    textAlign: 'left' as const,
   },
   text: {
     fontSize: '14px',

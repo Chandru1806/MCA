@@ -15,11 +15,9 @@ class UpdateUserSchema(Schema):
     first_name = fields.Str(validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(min=1, max=100))
     email = fields.Email()
-    phone = fields.Str(validate=validate.Length(max=15))
+    password = fields.Str(validate=validate.Length(min=8))
     address_line_1 = fields.Str(validate=validate.Length(max=255))
     address_line_2 = fields.Str(validate=validate.Length(max=255))
-    city = fields.Str(validate=validate.Length(max=50))
-    state = fields.Str(validate=validate.Length(max=50))
 
 class RefreshTokenSchema(Schema):
     refresh_token = fields.Str(required=True)

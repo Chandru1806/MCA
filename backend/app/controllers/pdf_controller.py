@@ -1,6 +1,7 @@
 import os
 import uuid
 import traceback
+import pandas as pd
 from werkzeug.utils import secure_filename
 from app import db
 from app.models.bank_statement import BankStatement
@@ -52,6 +53,12 @@ class PDFController:
             base = os.path.splitext(os.path.basename(file_path))[0]
             std_csv, rej_csv = standardize_and_write(df_raw, bank, base, output_dir)
             
+            # Count transactions
+            transaction_count = 0
+            if os.path.exists(std_csv):
+                df = pd.read_csv(std_csv)
+                transaction_count = len(df)
+            
             # Update to COMPLETED
             statement.extracted_csv_path = std_csv
             statement.normalized_csv_path = std_csv
@@ -59,10 +66,10 @@ class PDFController:
             db.session.commit()
             
             return {
-                'file_id': statement.file_id,
+                'statement_id': str(statement.file_id),
                 'bank_name': bank,
-                'std_csv': os.path.basename(std_csv),
-                'rej_csv': os.path.basename(rej_csv)
+                'transaction_count': transaction_count,
+                'csv_filename': os.path.basename(std_csv)
             }
             
         except Exception as e:

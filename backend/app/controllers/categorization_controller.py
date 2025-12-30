@@ -57,3 +57,31 @@ def get_categories(statement_id):
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@categorization_bp.route('/update/<transaction_id>', methods=['PUT'])
+@jwt_required()
+def update_category(transaction_id):
+    """Manually update transaction category"""
+    try:
+        from flask import request
+        data = request.get_json()
+        new_category = data.get('category')
+        
+        if not new_category:
+            return jsonify({'success': False, 'error': 'Category is required'}), 400
+        
+        category = TransactionCategory.query.filter_by(transaction_id=transaction_id).first()
+        if not category:
+            return jsonify({'success': False, 'error': 'Transaction category not found'}), 404
+        
+        category.category_name = new_category
+        category.classification_method = 'MANUAL'
+        category.confidence_score = 1.0
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Category updated successfully'
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

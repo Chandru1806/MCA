@@ -1,9 +1,25 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from app.services.transaction_service import TransactionService
 from app.models.transaction import Transaction
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import pandas as pd
 
 transaction_bp = Blueprint('transactions', __name__)
+
+@transaction_bp.route('/preview/<int:statement_id>', methods=['GET'])
+@jwt_required()
+def preview_transactions(statement_id):
+    """Preview transactions from CSV before import"""
+    try:
+        preview_data = TransactionService.preview_csv(statement_id)
+        return jsonify({
+            'success': True,
+            'data': preview_data
+        }), 200
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @transaction_bp.route('/import/<int:statement_id>', methods=['POST'])
 @jwt_required()

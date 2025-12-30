@@ -103,7 +103,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\",\n  \"phone\": \"1234567890\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\"\n}"
+              "raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\",\n  \"password\": \"NewSecurePass123\",\n  \"address_line_1\": \"456 New Street\",\n  \"address_line_2\": \"Suite 5A\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/auth/profiles/{{user_id}}",

@@ -79,6 +79,10 @@ export const LoginForm: React.FC = () => {
       </button>
 
       <div style={styles.footer}>
+        <a href="/forgot-password" style={styles.link}>
+          Forgot password?
+        </a>
+        <span style={{ margin: '0 8px', color: '#d1d5db' }}>|</span>
         Don't have an account?{' '}
         <a href="/signup" style={styles.link}>
           Sign up

@@ -7,10 +7,12 @@ export interface LoginCredentials {
 }
 
 export interface SignupCredentials {
+  first_name: string;
+  last_name: string;
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
 }
 
 export const authService = {

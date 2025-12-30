@@ -60,12 +60,12 @@ export const authController = {
   handleLogin: async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await authService.login(credentials);
-      useAuthStore.getState().login(response.token, response.user);
+      useAuthStore.getState().login(response.data.access_token, response.data.user);
       return { success: true };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed. Please try again.',
+        error: error.response?.data?.error?.message || 'Login failed. Please try again.',
       };
     }
   },
@@ -73,12 +73,12 @@ export const authController = {
   handleSignup: async (credentials: SignupCredentials): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await authService.signup(credentials);
-      useAuthStore.getState().login(response.token, response.user);
+      useAuthStore.getState().login(response.data.access_token, response.data.user);
       return { success: true };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Signup failed. Please try again.',
+        error: error.response?.data?.error?.message || 'Signup failed. Please try again.',
       };
     }
   },
