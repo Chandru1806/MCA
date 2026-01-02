@@ -1,6 +1,7 @@
 import React from 'react';
 import { SavingsReport } from '../../models/AnalyticsData';
 import jsPDF from 'jspdf';
+import { useAuthStore } from '../../store/authStore';
 
 interface SavingsReportDisplayProps {
   data: SavingsReport[];
@@ -8,6 +9,7 @@ interface SavingsReportDisplayProps {
 }
 
 export const SavingsReportDisplay: React.FC<SavingsReportDisplayProps> = ({ data, targetMonth }) => {
+  const { user } = useAuthStore();
   const totalSavings = data.reduce((sum, item) => sum + item.savings, 0);
   const totalCurrentSpending = data.reduce((sum, item) => sum + item.current_spending, 0);
   const totalBudgetLimit = data.reduce((sum, item) => sum + item.budget_limit, 0);
@@ -29,46 +31,97 @@ export const SavingsReportDisplay: React.FC<SavingsReportDisplayProps> = ({ data
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
     doc.addImage('/Logo/ExpenseIQ_Logo.png', 'PNG', 15, 10, 30, 30);
     
-    const userName = localStorage.getItem('user_name') || 'User';
+    const fullName = user ? `${user.first_name} ${user.last_name}` : 'User';
     doc.setFontSize(12);
-    doc.text(userName, pageWidth - 15, 20, { align: 'right' });
+    doc.text(fullName, pageWidth - 15, 20, { align: 'right' });
     doc.setFontSize(16);
-    doc.text('Savings Report', pageWidth - 15, 30, { align: 'right' });
+    doc.text('Detailed Savings Report', pageWidth - 15, 30, { align: 'right' });
     
     doc.setFontSize(10);
     doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 15, 50);
     doc.text(`Projection Period: ${targetMonth}`, 15, 57);
     
     doc.setFontSize(14);
-    doc.text('SAVINGS ANALYSIS', 15, 70);
+    doc.text('SUMMARY OVERVIEW', 15, 70);
     doc.setLineWidth(0.5);
     doc.line(15, 72, pageWidth - 15, 72);
     
-    let yPos = 85;
+    let yPos = 80;
+    doc.setFontSize(10);
+    doc.text(`Total Monthly Savings: Rs ${totalSavings.toFixed(2)} (${savingsPercentage}% of current spending)`, 15, yPos);
+    yPos += 6;
+    doc.text(`Current Spending: Rs ${totalCurrentSpending.toFixed(2)} across ${data.length} categories`, 15, yPos);
+    yPos += 6;
+    doc.text(`New Budget Target: Rs ${totalBudgetLimit.toFixed(2)}`, 15, yPos);
+    yPos += 6;
+    doc.text(`Annual Savings Potential: Rs ${(totalSavings * 12).toFixed(2)}`, 15, yPos);
+    yPos += 6;
+    doc.text(`Total Categories: ${data.length}`, 15, yPos);
+    yPos += 6;
+    doc.text(`Months to Save Rs 100,000: ${calculateMonthsToGoal(totalSavings)} months`, 15, yPos);
+    yPos += 6;
+    doc.text(`Avg Savings per Category: Rs ${(totalSavings / data.length).toFixed(2)}`, 15, yPos);
+    yPos += 12;
+    
+    doc.setFontSize(14);
+    doc.text('CATEGORY-WISE BREAKDOWN', 15, yPos);
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos + 2, pageWidth - 15, yPos + 2);
+    yPos += 10;
+    
     data.forEach((item, index) => {
-      doc.setFontSize(12);
-      doc.text(`${index + 1}. ${item.category}`, 15, yPos);
-      yPos += 7;
+      const risk = calculateRiskLevel(item.savings, item.current_spending);
+      const reductionPercent = ((item.savings / item.current_spending) * 100).toFixed(1);
+      const budgetUtilization = ((item.budget_limit / item.current_spending) * 100).toFixed(0);
       
-      doc.setFontSize(10);
-      doc.text(`Current Spending: Rs ${item.current_spending.toFixed(2)}`, 20, yPos);
-      yPos += 6;
-      doc.text(`Budget Limit: Rs ${item.budget_limit.toFixed(2)}`, 20, yPos);
-      yPos += 6;
-      doc.text(`Savings Potential: Rs ${item.savings.toFixed(2)}`, 20, yPos);
-      yPos += 10;
-      
-      if (yPos > 270) {
+      if (yPos > pageHeight - 60) {
         doc.addPage();
         yPos = 20;
       }
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${index + 1}. ${item.category}`, 15, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`[${risk.level}]`, 15 + doc.getTextWidth(`${index + 1}. ${item.category} `) + 2, yPos);
+      yPos += 7;
+      
+      doc.setFontSize(10);
+      doc.text(`   Savings Potential: Rs ${item.savings.toFixed(2)}`, 15, yPos);
+      yPos += 6;
+      doc.text(`   Current Spending: Rs ${item.current_spending.toFixed(2)}`, 15, yPos);
+      yPos += 6;
+      doc.text(`   Target Budget: Rs ${item.budget_limit.toFixed(2)}`, 15, yPos);
+      yPos += 6;
+      doc.text(`   Reduction Required: ${reductionPercent}%`, 15, yPos);
+      yPos += 6;
+      doc.text(`   Annual Savings: Rs ${(item.savings * 12).toFixed(2)}`, 15, yPos);
+      yPos += 6;
+      doc.text(`   Budget Utilization: ${budgetUtilization}%`, 15, yPos);
+      yPos += 6;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      const insight = `   Insight: To achieve your ${item.category} budget goal, reduce spending by Rs ${item.savings.toFixed(2)} (${reductionPercent}%).${item.savings > 0 && item.savings > item.budget_limit * 0.5 ? ' This is challenging - consider a phased approach.' : ''}`;
+      const splitInsight = doc.splitTextToSize(insight, pageWidth - 30);
+      doc.text(splitInsight, 15, yPos);
+      yPos += splitInsight.length * 5 + 8;
+      doc.setFont('helvetica', 'normal');
     });
     
-    doc.setFontSize(12);
-    doc.text(`TOTAL SAVINGS POTENTIAL: Rs ${totalSavings.toFixed(2)}`, 15, yPos);
+    if (yPos > pageHeight - 30) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Generated by ExpenseIQ - Smart Personal Expense & Budget Advisor', pageWidth / 2, pageHeight - 10, { align: 'center' });
     
     doc.save(`ExpenseIQ_Savings_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
@@ -183,7 +236,7 @@ export const SavingsReportDisplay: React.FC<SavingsReportDisplayProps> = ({ data
           <span style={styles.footerValue}>{data.length}</span>
         </div>
         <div style={styles.footerItem}>
-          <span>Months to Save ₹100K:</span>
+          <span>Months to Save:</span>
           <span style={styles.footerValue}>{calculateMonthsToGoal(totalSavings)} months</span>
         </div>
         <div style={styles.footerItem}>
