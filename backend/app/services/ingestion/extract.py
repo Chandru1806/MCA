@@ -95,11 +95,9 @@ def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
         for page in pdf.pages:
             table = page.extract_table()
 
-            # If no table present, skip
             if not table:
                 continue
 
-            # Validate table has at least 7 columns
             header = table[0]
             if len(header) < 7:
                 continue
@@ -109,38 +107,16 @@ def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
                 if not row or len(row) < 7:
                     continue
 
-                date        = row[0].strip() if row[0] else None
-                narr        = row[1].strip() if row[1] else None
-                
-                debit_raw   = row[4]
-                credit_raw  = row[5]
-                balance_raw = row[6]
+                date        = row[0].strip() if row[0] else ""
+                narr        = row[1].strip() if row[1] else ""
+                chq_ref     = row[2].strip() if row[2] else ""
+                debit_raw   = row[4].strip() if row[4] else ""
+                credit_raw  = row[5].strip() if row[5] else ""
+                balance_raw = row[6].strip() if row[6] else ""
 
-                debit   = normalize_amount(debit_raw)
-                credit  = normalize_amount(credit_raw)
-                balance = normalize_amount(balance_raw)
+                rows.append([date, narr, chq_ref, debit_raw, credit_raw, balance_raw])
 
-                rows.append([
-                    str(uuid.uuid4()),   # Transaction_ID
-                    date,                # Transaction_Date
-                    narr,                # Description
-                    debit,               # Debit_Amount
-                    credit,              # Credit_Amount
-                    balance,             # Balance
-                    "HDFC"               # Bank_Name
-                ])
-
-    df = pd.DataFrame(rows, columns=[
-        "Transaction_ID",
-        "Transaction_Date",
-        "Description",
-        "Debit_Amount",
-        "Credit_Amount",
-        "Balance",
-        "Bank_Name"
-    ])
-
-    # Drop completely empty rows
+    df = pd.DataFrame(rows, columns=["Date", "Narration", "Chq/Ref No", "Debit", "Credit", "Balance"])
     df = df.dropna(how="all").reset_index(drop=True)
 
     return df
