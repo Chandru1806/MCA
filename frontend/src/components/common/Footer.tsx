@@ -5,7 +5,7 @@ export const Footer: React.FC = () => {
     <footer style={styles.footer}>
       <div style={styles.container}>
         <p style={styles.text}>
-          © 2024 ExpenseIQ. All rights reserved.
+          © 2025 ExpenseIQ. All rights reserved.
         </p>
       </div>
     </footer>
