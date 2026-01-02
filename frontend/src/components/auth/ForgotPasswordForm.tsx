@@ -11,6 +11,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +32,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
     setLoading(false);
 
     if (result.success && result.userId) {
-      onSuccess(result.userId);
+      setSuccessMessage('Email verified successfully! Proceeding to reset password...');
+      setTimeout(() => onSuccess(result.userId), 1500);
     } else {
       setApiError(result.error || 'Failed to verify email');
     }
@@ -50,6 +52,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
     <form onSubmit={handleSubmit}>
       <p style={styles.helperText}>Enter your registered email to reset your password.</p>
 
+      {successMessage && <div style={styles.successBox}>{successMessage}</div>}
       {apiError && <div style={styles.errorBox}>{apiError}</div>}
 
       <Input
@@ -86,6 +89,15 @@ const styles = {
     color: '#6b7280',
     marginBottom: '24px',
     lineHeight: '1.5',
+  },
+  successBox: {
+    backgroundColor: '#f0fdf4',
+    color: '#16a34a',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    marginBottom: '24px',
+    fontSize: '14px',
+    border: '1px solid #86efac',
   },
   errorBox: {
     backgroundColor: '#fef2f2',

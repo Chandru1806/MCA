@@ -11,6 +11,7 @@ export const PreprocessPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   const handleFileSelect = (file: File) => {
     const validation = preprocessController.validateFile(file);
@@ -32,6 +33,7 @@ export const PreprocessPage: React.FC = () => {
     try {
       const blob = await preprocessController.processCSV(selectedFile);
       setProcessedBlob(blob);
+      setSuccessMessage('File processed successfully! You can now download it.');
       setStep('complete');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Processing failed');
@@ -50,6 +52,7 @@ export const PreprocessPage: React.FC = () => {
     setSelectedFile(null);
     setProcessedBlob(null);
     setError('');
+    setSuccessMessage('');
   };
 
   const handleBack = () => {
@@ -88,6 +91,10 @@ export const PreprocessPage: React.FC = () => {
 
         {error && (
           <div style={styles.error}>{error}</div>
+        )}
+
+        {successMessage && (
+          <div style={styles.success}>{successMessage}</div>
         )}
 
         {step === 'select' && (
@@ -210,6 +217,15 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #fc8181',
     borderRadius: '6px',
     color: '#c53030',
+    fontSize: '14px',
+    marginBottom: '20px',
+  },
+  success: {
+    padding: '12px',
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #86efac',
+    borderRadius: '6px',
+    color: '#16a34a',
     fontSize: '14px',
     marginBottom: '20px',
   },

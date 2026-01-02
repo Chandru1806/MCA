@@ -11,6 +11,7 @@ export const PDFUploadPage: React.FC = () => {
   const [status, setStatus] = useState('');
   const [result, setResult] = useState<PDFUploadResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleFileSelect = async (file: File, bank: string) => {
     const fileError = pdfController.validateFile(file);
@@ -38,6 +39,7 @@ export const PDFUploadPage: React.FC = () => {
 
       setResult(uploadResult);
       setStatus('Upload completed successfully');
+      setSuccessMessage('PDF uploaded and processed successfully!');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Upload failed. Please try again.');
       setStatus('Upload failed');
@@ -49,6 +51,7 @@ export const PDFUploadPage: React.FC = () => {
   const handleRetry = () => {
     setResult(null);
     setError(null);
+    setSuccessMessage(null);
     setProgress(0);
     setStatus('');
   };
@@ -63,6 +66,9 @@ export const PDFUploadPage: React.FC = () => {
       </div>
 
       <div style={styles.card}>
+        {successMessage && (
+          <div style={styles.successBox}>{successMessage}</div>
+        )}
         <PDFUploader onFileSelect={handleFileSelect} disabled={isUploading} />
 
         {isUploading && <UploadProgress progress={progress} status={status} />}
@@ -102,5 +108,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '12px',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
+  },
+  successBox: {
+    backgroundColor: '#f0fdf4',
+    color: '#16a34a',
+    padding: '12px 16px',
+    margin: '20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    border: '1px solid #86efac',
   },
 };

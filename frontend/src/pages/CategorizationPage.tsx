@@ -17,6 +17,7 @@ export const CategorizationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
     if (!statementId) {
@@ -56,6 +57,8 @@ export const CategorizationPage: React.FC = () => {
           : t
       ));
       setEditingId(null);
+      setSuccessMessage('Category updated successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to update category');
     }
@@ -100,6 +103,19 @@ export const CategorizationPage: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+      {successMessage && (
+        <div style={{
+          padding: '12px 16px',
+          backgroundColor: '#f0fdf4',
+          color: '#16a34a',
+          border: '1px solid #86efac',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          fontSize: '14px'
+        }}>
+          {successMessage}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>Categorized Transactions</h1>
         <button

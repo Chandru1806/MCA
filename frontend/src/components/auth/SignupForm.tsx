@@ -14,6 +14,7 @@ export const SignupForm: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; username?: string; email?: string; password?: string; confirmPassword?: string }>({});
   const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +35,8 @@ export const SignupForm: React.FC = () => {
     setLoading(false);
 
     if (result.success) {
-      navigate('/dashboard');
+      setSuccessMessage('Account created successfully! Redirecting to dashboard...');
+      setTimeout(() => navigate('/dashboard'), 1500);
     } else {
       setApiError(result.error || 'Signup failed');
     }
@@ -51,6 +53,9 @@ export const SignupForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit}>
+      {successMessage && (
+        <div style={styles.successBox}>{successMessage}</div>
+      )}
       {apiError && (
         <div style={styles.errorBox}>{apiError}</div>
       )}
@@ -143,6 +148,15 @@ const styles = {
     marginTop: '16px',
     fontSize: '14px',
     color: '#6b7280',
+  },
+  successBox: {
+    backgroundColor: '#f0fdf4',
+    color: '#16a34a',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    marginBottom: '24px',
+    fontSize: '14px',
+    border: '1px solid #86efac',
   },
   errorBox: {
     backgroundColor: '#fef2f2',
