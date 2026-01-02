@@ -89,60 +89,59 @@ def normalize_amount(v):
 
 
 def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
+    """
+    Extract HDFC transactions from PDF statement.
+    Returns: DataFrame with columns [Date, Narration, Chq/Ref No, Debit, Credit, Balance]
+    """
     rows = []
-
+    
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
-            table = page.extract_table()
-
-            # If no table present, skip
-            if not table:
+            tables = page.extract_tables()
+            if not tables:
                 continue
-
-            # Validate table has at least 7 columns
-            header = table[0]
-            if len(header) < 7:
-                continue
-
-            # Process each row (skip header)
-            for row in table[1:]:
-                if not row or len(row) < 7:
+            
+            for table in tables:
+                if not table or len(table) < 2:
                     continue
-
-                date        = row[0].strip() if row[0] else None
-                narr        = row[1].strip() if row[1] else None
                 
-                debit_raw   = row[4]
-                credit_raw  = row[5]
-                balance_raw = row[6]
-
-                debit   = normalize_amount(debit_raw)
-                credit  = normalize_amount(credit_raw)
-                balance = normalize_amount(balance_raw)
-
-                rows.append([
-                    str(uuid.uuid4()),   # Transaction_ID
-                    date,                # Transaction_Date
-                    narr,                # Description
-                    debit,               # Debit_Amount
-                    credit,              # Credit_Amount
-                    balance,             # Balance
-                    "HDFC"               # Bank_Name
-                ])
-
-    df = pd.DataFrame(rows, columns=[
-        "Transaction_ID",
-        "Transaction_Date",
-        "Description",
-        "Debit_Amount",
-        "Credit_Amount",
-        "Balance",
-        "Bank_Name"
-    ])
-
-    # Drop completely empty rows
-    df = df.dropna(how="all").reset_index(drop=True)
-
+                # Find header row
+                header_idx = None
+                for i, row in enumerate(table):
+                    row_text = " ".join(str(c or "").lower() for c in row)
+                    if "date" in row_text and "narration" in row_text and ("withdrawal" in row_text or "deposit" in row_text):
+                        header_idx = i
+                        break
+                
+                if header_idx is None:
+                    continue
+                
+                # Process data rows
+                for row in table[header_idx + 1:]:
+                    if not row or len(row) < 6:
+                        continue
+                    
+                    # HDFC columns: Date | Narration | Chq/Ref | Value Dt | Withdrawal | Deposit | Balance
+                    date = str(row[0] or "").strip()
+                    narr = str(row[1] or "").strip()
+                    ref = str(row[2] or "").strip()
+                    withdrawal = str(row[4] or "").strip() if len(row) > 4 else ""
+                    deposit = str(row[5] or "").strip() if len(row) > 5 else ""
+                    balance = str(row[6] or "").strip() if len(row) > 6 else ""
+                    
+                    # Skip noise
+                    if not date or _is_noise(date) or not DATE_RE.match(date):
+                        continue
+                    
+                    # Clean amounts
+                    withdrawal = withdrawal.replace(",", "").replace("₹", "").strip()
+                    deposit = deposit.replace(",", "").replace("₹", "").strip()
+                    balance = balance.replace(",", "").replace("₹", "").strip()
+                    
+                    rows.append([date, narr, ref, withdrawal, deposit, balance])
+    
+    df = pd.DataFrame(rows, columns=["Date", "Narration", "Chq/Ref No", "Debit", "Credit", "Balance"])
+    print(f"[HDFC] Extracted {len(df)} transactions")
     return df
 
 
