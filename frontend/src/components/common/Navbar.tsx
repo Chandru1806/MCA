@@ -66,16 +66,6 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => {
                   setDropdownOpen(false);
-                  navigate('/change-password');
-                }}
-                style={styles.dropdownItem}
-                className="dropdown-item"
-              >
-                Change Password
-              </button>
-              <button
-                onClick={() => {
-                  setDropdownOpen(false);
                   handleLogout();
                 }}
                 style={styles.dropdownItem}

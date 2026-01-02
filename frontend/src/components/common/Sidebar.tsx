@@ -30,11 +30,11 @@ export const Sidebar: React.FC = () => {
 
 const styles = {
   sidebar: {
-    width: '240px',
+    width: '110px',
     backgroundColor: '#ffffff',
     borderRight: '1px solid #e5e7eb',
-    minHeight: '100vh',
-    padding: '20px 16px',
+    minHeight: '0vh',
+    // padding: '20px 16px',
   },
   nav: {
     display: 'flex',
