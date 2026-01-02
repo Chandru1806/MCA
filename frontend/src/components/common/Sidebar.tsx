@@ -6,24 +6,19 @@ export const Sidebar: React.FC = () => {
 
   const links = [
     { path: '/dashboard', label: 'Dashboard' },
-    { path: '/upload', label: 'Upload Statement' },
-    { path: '/transactions', label: 'Transactions' },
-    { path: '/categorize', label: 'Categorize' },
-    { path: '/analytics', label: 'Analytics' },
   ];
 
   return (
-    <aside className="w-64 bg-gray-50 border-r min-h-screen p-4">
-      <nav className="flex flex-col gap-2">
+    <aside style={styles.sidebar}>
+      <nav style={styles.nav}>
         {links.map((link) => (
           <Link
             key={link.path}
             to={link.path}
-            className={`px-4 py-3 rounded transition-colors ${
-              location.pathname === link.path
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
+            style={{
+              ...styles.link,
+              ...(location.pathname === link.path ? styles.activeLink : styles.inactiveLink),
+            }}
           >
             {link.label}
           </Link>
@@ -31,4 +26,36 @@ export const Sidebar: React.FC = () => {
       </nav>
     </aside>
   );
+};
+
+const styles = {
+  sidebar: {
+    width: '240px',
+    backgroundColor: '#ffffff',
+    borderRight: '1px solid #e5e7eb',
+    minHeight: '100vh',
+    padding: '20px 16px',
+  },
+  nav: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+  },
+  link: {
+    display: 'block',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    textDecoration: 'none',
+    fontSize: '15px',
+    fontWeight: '500',
+    transition: 'all 0.2s ease',
+  },
+  activeLink: {
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+  },
+  inactiveLink: {
+    backgroundColor: 'transparent',
+    color: '#374151',
+  },
 };
