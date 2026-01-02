@@ -95,116 +95,59 @@ def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
     rows = []
     
     with pdfplumber.open(pdf_path) as pdf:
-        for page_num, page in enumerate(pdf.pages):
-            tables = page.extract_tables()
-            if not tables:
+        for page in pdf.pages:
+            # Use extract_text with layout to preserve structure
+            text = page.extract_text()
+            if not text:
                 continue
             
-            for table_num, table in enumerate(tables):
-                if not table or len(table) < 2:
+            lines = text.split('\n')
+            in_transaction_section = False
+            
+            for line in lines:
+                # Skip noise
+                if _is_noise(line):
                     continue
                 
-                # Find header row with flexible matching
-                header_idx = None
-                for i, row in enumerate(table):
-                    if not row:
-                        continue
-                    row_text = " ".join(str(c or "").lower() for c in row)
-                    # Match HDFC headers: Date, Narration, and any amount/balance column
-                    if ("date" in row_text and "narration" in row_text and 
-                        ("withdrawal" in row_text or "deposit" in row_text or 
-                         "closing" in row_text or "balance" in row_text)):
-                        header_idx = i
-                        print(f"[HDFC] Found header at page {page_num+1}, table {table_num+1}, row {i}")
-                        break
-                
-                if header_idx is None:
+                # Check if we're in transaction section
+                if "Date" in line and "Narration" in line and ("Withdrawal" in line or "Deposit" in line):
+                    in_transaction_section = True
                     continue
                 
-                # Process data rows
-                for row_idx, row in enumerate(table[header_idx + 1:]):
-                    if not row or len(row) < 7:
+                if not in_transaction_section:
+                    continue
+                
+                # Match transaction line: starts with date DD/MM/YY
+                if DATE_RE.match(line.strip()):
+                    parts = line.split()
+                    if len(parts) < 4:
                         continue
                     
-                    # HDFC columns: Date | Narration | Chq/Ref | Value Dt | Withdrawal | Deposit | Balance
-                    date = str(row[0] or "").strip()
-                    narr = str(row[1] or "").strip()
-                    ref = str(row[2] or "").strip()
-                    withdrawal = str(row[4] or "").strip()
-                    deposit = str(row[5] or "").strip()
-                    balance = str(row[6] or "").strip()
+                    date = parts[0]
                     
-                    # Skip noise and invalid dates
-                    if not date or _is_noise(date) or not DATE_RE.match(date):
-                        continue
+                    # Find amounts (last 3 values are typically: withdrawal, deposit, balance)
+                    amounts = [p.replace(',', '') for p in parts if NUM_RE.match(p.replace(',', ''))]
                     
-                    # Clean amounts
-                    withdrawal = withdrawal.replace(",", "").replace("₹", "").strip()
-                    deposit = deposit.replace(",", "").replace("₹", "").strip()
-                    balance = balance.replace(",", "").replace("₹", "").strip()
-                    
-                    rows.append([date, narr, ref, withdrawal, deposit, balance])
+                    if len(amounts) >= 1:
+                        balance = amounts[-1]
+                        withdrawal = amounts[-3] if len(amounts) >= 3 else ""
+                        deposit = amounts[-2] if len(amounts) >= 2 else ""
+                        
+                        # Extract narration (everything between date and amounts)
+                        narration_parts = []
+                        for p in parts[1:]:
+                            if not NUM_RE.match(p.replace(',', '')):
+                                narration_parts.append(p)
+                            else:
+                                break
+                        
+                        narration = " ".join(narration_parts)
+                        
+                        rows.append([date, narration, "", withdrawal, deposit, balance])
     
     df = pd.DataFrame(rows, columns=["Date", "Narration", "Chq/Ref No", "Debit", "Credit", "Balance"])
     print(f"[HDFC] Extracted {len(df)} transactions")
     return df
-
-# def parse_hdfc_df(pdf_path: str) -> pd.DataFrame:
-#     """
-#     Extract HDFC transactions from PDF statement.
-#     Returns: DataFrame with columns [Date, Narration, Chq/Ref No, Debit, Credit, Balance]
-#     """
-#     rows = []
-    
-#     with pdfplumber.open(pdf_path) as pdf:
-#         for page in pdf.pages:
-#             tables = page.extract_tables()
-#             if not tables:
-#                 continue
-            
-#             for table in tables:
-#                 if not table or len(table) < 2:
-#                     continue
-                
-#                 # Find header row
-#                 header_idx = None
-#                 for i, row in enumerate(table):
-#                     row_text = " ".join(str(c or "").lower() for c in row)
-#                     if "date" in row_text and "narration" in row_text and ("withdrawal" in row_text or "deposit" in row_text):
-#                         header_idx = i
-#                         break
-                
-#                 if header_idx is None:
-#                     continue
-                
-#                 # Process data rows
-#                 for row in table[header_idx + 1:]:
-#                     if not row or len(row) < 6:
-#                         continue
-                    
-#                     # HDFC columns: Date | Narration | Chq/Ref | Value Dt | Withdrawal | Deposit | Balance
-#                     date = str(row[0] or "").strip()
-#                     narr = str(row[1] or "").strip()
-#                     ref = str(row[2] or "").strip()
-#                     withdrawal = str(row[4] or "").strip() if len(row) > 4 else ""
-#                     deposit = str(row[5] or "").strip() if len(row) > 5 else ""
-#                     balance = str(row[6] or "").strip() if len(row) > 6 else ""
-                    
-#                     # Skip noise
-#                     if not date or _is_noise(date) or not DATE_RE.match(date):
-#                         continue
-                    
-#                     # Clean amounts
-#                     withdrawal = withdrawal.replace(",", "").replace("₹", "").strip()
-#                     deposit = deposit.replace(",", "").replace("₹", "").strip()
-#                     balance = balance.replace(",", "").replace("₹", "").strip()
-                    
-#                     rows.append([date, narr, ref, withdrawal, deposit, balance])
-    
-#     df = pd.DataFrame(rows, columns=["Date", "Narration", "Chq/Ref No", "Debit", "Credit", "Balance"])
-#     print(f"[HDFC] Extracted {len(df)} transactions")
-#     return df
-
 
 
 # KOTAK + GENERIC parsers remain unchanged unless you want footer removal there as well.
